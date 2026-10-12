@@ -1,5 +1,6 @@
 package com.example.amp_g17;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
@@ -37,7 +38,10 @@ public class RegisterActivity extends AppCompatActivity {
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+                // Khai bao Intent
+                Intent myStart = new Intent(RegisterActivity.this, StartActivity.class);
+                // Khoi dong
+                startActivity(myStart);
             }
         });
 
@@ -51,7 +55,10 @@ public class RegisterActivity extends AppCompatActivity {
         tvLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+                // Khai bao Intent
+                Intent myLogin = new Intent(RegisterActivity.this, LoginActivity.class);
+                // Khoi dong
+                startActivity(myLogin);
             }
         });
     }

@@ -1,5 +1,6 @@
 package com.example.amp_g17;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
@@ -35,7 +36,10 @@ public class LoginActivity extends AppCompatActivity {
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+                // Khai bao Intent
+                Intent myStart = new Intent(LoginActivity.this, StartActivity.class);
+                // Khoi dong
+                startActivity(myStart);
             }
         });
 
@@ -50,10 +54,10 @@ public class LoginActivity extends AppCompatActivity {
         tvLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: Chuyển sang RegisterActivity (nếu đã tạo)
-                // Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-                // startActivity(intent);
-                Toast.makeText(LoginActivity.this, "Chuyển sang màn hình Đăng ký", Toast.LENGTH_SHORT).show();
+                // Khai bao Intent
+                Intent myRegister = new Intent(LoginActivity.this, RegisterActivity.class);
+                // Khoi dong
+                startActivity(myRegister);
             }
         });
 
