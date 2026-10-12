@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:background="@drawable/anime_style_clouds"
+    android:paddingStart="18dp"
+    android:paddingEnd="18dp">
+
+    <!-- Khoảng trống phía trên -->
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_weight="1.8" />
+
+    <LinearLayout
+        android:id="@+id/introGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="17dp"
+            android:text="TREASURE HUNT"
+            android:textColor="#FFC107"
+            android:textSize="45dp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Game săn kho báu"
+            android:textColor="#000000"
+            android:textSize="24dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/logo"
+        android:layout_width="match_parent"
+        android:layout_height="280dp"
+        android:gravity="center"
+        android:orientation="vertical" >
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/img_tim_kho_bau"
+            android:padding="17dp"></FrameLayout>
+
+    </LinearLayout>
+
+    <!-- Hai nút chức năng -->
+    <LinearLayout
+        android:id="@+id/actionsGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btnLogin"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:background="@drawable/btn_green"
+            android:minHeight="50dp"
+            android:minWidth="50dp"
+            android:padding="0dp"
+            android:text="ĐĂNG NHẬP"
+            android:textAllCaps="false"
+            android:textColor="#292929"
+            android:textSize="20dp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnRegister"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginTop="9dp"
+            android:background="@drawable/btn_orange"
+            android:minHeight="50dp"
+            android:minWidth="50dp"
+            android:padding="0dp"
+            android:text="ĐĂNG KÝ"
+            android:textAllCaps="false"
+            android:textColor="#292929"
+            android:textSize="20dp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- Khoảng trống trước điều khoản -->
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.7" />
+
+    <TextView
+        android:id="@+id/txtTerms"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:gravity="center"
+        android:text="Điều khoản sử dụng · Chính sách quyền riêng tư"
+        android:textColor="#000000"
+        android:textSize="16sp" />
+
+</LinearLayout>
