@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "210591432461",
+    "project_id": "amp-g17",
+    "storage_bucket": "amp-g17.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:210591432461:android:3d7e385f2ac4e2e2957a44",
+        "android_client_info": {
+          "package_name": "com.example.amp_g17"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwjE6tg40kaoLaSGnALtQP2cqo35NKwIA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
