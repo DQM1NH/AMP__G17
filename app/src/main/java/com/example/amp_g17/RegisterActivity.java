@@ -14,6 +14,13 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class RegisterActivity extends AppCompatActivity {
     private ImageView btnBack;
     private EditText etPlayerName;
@@ -22,10 +29,19 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText etConfirmPassword;
     private Button btnRegister;
     private TextView tvLogin;
+
+    // Khai báo Firebase Authentication và Firestore
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
+
+        // Khởi tạo các instance của Firebase
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         btnBack = findViewById(R.id.btnBack);
         etPlayerName = findViewById(R.id.etPlayerName);
@@ -38,10 +54,9 @@ public class RegisterActivity extends AppCompatActivity {
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Khai bao Intent
                 Intent myStart = new Intent(RegisterActivity.this, StartActivity.class);
-                // Khoi dong
                 startActivity(myStart);
+                finish();
             }
         });
 
@@ -55,10 +70,9 @@ public class RegisterActivity extends AppCompatActivity {
         tvLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Khai bao Intent
                 Intent myLogin = new Intent(RegisterActivity.this, LoginActivity.class);
-                // Khoi dong
                 startActivity(myLogin);
+                finish();
             }
         });
     }
@@ -111,13 +125,61 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        // Nếu tất cả thông tin hợp lệ -> Gọi hàm xử lý đăng ký
+        // Vô hiệu hóa nút đăng ký để tránh bấm nhiều lần
+        btnRegister.setEnabled(false);
+
+        // Gọi hàm đăng ký với Firebase
         performRegister(playerName, email, password);
     }
 
-    private void performRegister(String playerName, String email, String password) {
-        // TODO: Xử lý lưu thông tin (Gửi request đến Server API hoặc Firebase Auth / Database)
-        Toast.makeText(this, "Đăng ký thành công! Chào mừng " + playerName, Toast.LENGTH_SHORT).show();
-        finish();
+    private void performRegister(final String playerName, final String email, String password) {
+        // 1. Tạo tài khoản trong Firebase Authentication
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            String userId = user.getUid();
+
+                            // 2. Chuẩn bị dữ liệu khớp CHÍNH XÁC với Firestore Security Rules
+                            com.google.firebase.Timestamp now = com.google.firebase.Timestamp.now();
+
+                            Map<String, Object> userData = new HashMap<>();
+                            userData.put("displayName", playerName);
+                            userData.put("avatarUrl", ""); // Mặc định chuỗi rỗng
+                            userData.put("totalScore", 0);
+                            userData.put("completedTreasureCount", 0);
+                            userData.put("experiencePoints", 0);
+                            userData.put("totalChallengesJoined", 0);
+                            userData.put("createdAt", now);
+                            userData.put("updatedAt", now);
+                            userData.put("lastActiveAt", now);
+
+                            // 3. Lưu vào collection "users"
+                            db.collection("users").document(userId)
+                                    .set(userData)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(RegisterActivity.this,
+                                                "Đăng ký thành công! Chào mừng " + playerName,
+                                                Toast.LENGTH_SHORT).show();
+
+                                        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                                        startActivity(intent);
+                                        finish();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        btnRegister.setEnabled(true);
+                                        android.util.Log.e("FirestoreError", "Lỗi lưu dữ liệu: ", e);
+                                        Toast.makeText(RegisterActivity.this,
+                                                "Lỗi lưu dữ liệu: " + e.getLocalizedMessage(),
+                                                Toast.LENGTH_LONG).show();
+                                    });
+                        }
+                    } else {
+                        btnRegister.setEnabled(true);
+                        String errorMessage = task.getException() != null ? task.getException().getMessage() : "Đăng ký thất bại";
+                        Toast.makeText(RegisterActivity.this, "Lỗi đăng ký: " + errorMessage, Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 }
