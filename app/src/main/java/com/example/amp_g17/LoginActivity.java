@@ -99,6 +99,14 @@ public class LoginActivity extends AppCompatActivity {
         // Thực hiện kết nối server/database ở đây
         Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
 
+        Intent intent = new Intent(
+                LoginActivity.this,
+                MapActivity.class
+        );
+        startActivity(intent);
+        finish();
+
+
         // TODO: Chuyển sang màn hình chính (MainActivity)
         // Intent intent = new Intent(LoginActivity.this, MainActivity.class);
         // startActivity(intent);

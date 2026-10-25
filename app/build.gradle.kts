@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     id ("com.google.gms.google-services")
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+
 }
 
 android {
@@ -45,4 +47,12 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
     implementation("com.google.firebase:firebase-firestore")
     implementation ("com.google.firebase:firebase-auth" )
+    implementation("com.google.android.gms:play-services-maps:20.1.0")
+    implementation("com.google.android.gms:play-services-location:21.4.0")
 }
+
+secrets {
+    propertiesFileName = "secrets.properties"
+    defaultPropertiesFileName = "local.defaults.properties"
+}
+
