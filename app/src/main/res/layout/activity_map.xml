@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:fitsSystemWindows="true">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TREASURE HUNT"
+        android:textStyle="bold"
+        android:textSize="22sp"
+        android:textColor="#222222"
+        android:padding="20dp"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_margin="12dp">
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <LinearLayout
+            android:id="@+id/chestPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:padding="16dp"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:elevation="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvChestName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Kho báu 01"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:textColor="#222222"/>
+
+            <TextView
+                android:id="@+id/tvDistance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="-- m"
+                android:gravity="center"
+                android:textSize="30sp"
+                android:textColor="#222222"/>
+
+            <Button
+                android:id="@+id/btnHunt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="BẮT ĐẦU SĂN"/>
+
+            <Button
+                android:id="@+id/btnChallenge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="MỞ THỬ THÁCH"
+                android:enabled="false"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/btnClose"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="QUAY LẠI"/>
+        </LinearLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnMapTab"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Bản đồ"/>
+
+        <Button
+            android:id="@+id/btnRank"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Xếp hạng"/>
+    </LinearLayout>
+
+</LinearLayout>
