@@ -14,6 +14,11 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class LoginActivity extends AppCompatActivity {
 
     private ImageView btnBack;
@@ -21,11 +26,14 @@ public class LoginActivity extends AppCompatActivity {
     private EditText etPassword;
     private Button btnLogin;
     private TextView tvLogin;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        mAuth = FirebaseAuth.getInstance();
 
         btnBack = findViewById(R.id.btnBack);
         etEmail = findViewById(R.id.etEmail);
@@ -96,20 +104,38 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void performLogin(String email, String password) {
-        // Thực hiện kết nối server/database ở đây
-        Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
-
-        Intent intent = new Intent(
-                LoginActivity.this,
-                MapActivity.class
-        );
-        startActivity(intent);
-        finish();
-
-
-        // TODO: Chuyển sang màn hình chính (MainActivity)
-        // Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-        // startActivity(intent);
-        // finish();
+        btnLogin.setEnabled(false);
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            String uid = user.getUid();
+                            FirebaseFirestore db = FirebaseFirestore.getInstance();
+                            db.collection("users").document(uid).get()
+                                    .addOnSuccessListener(documentSnapshot -> {
+                                        String displayName = documentSnapshot.getString("displayName");
+                                        if (displayName == null || displayName.isEmpty()) {
+                                            displayName = "người chơi";
+                                        }
+                                        db.collection("users").document(uid).update("lastActiveAt", Timestamp.now());
+                                        Toast.makeText(LoginActivity.this, "Đăng nhập thành công! Chào mừng " + displayName, Toast.LENGTH_SHORT).show();
+                                        Intent intent = new Intent(LoginActivity.this, MapActivity.class);
+                                        startActivity(intent);
+                                        finish();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(LoginActivity.this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
+                                        Intent intent = new Intent(LoginActivity.this, MapActivity.class);
+                                        startActivity(intent);
+                                        finish();
+                                    });
+                        }
+                    } else {
+                        btnLogin.setEnabled(true);
+                        String errorMessage = task.getException() != null ? task.getException().getMessage() : "Đăng nhập thất bại";
+                        Toast.makeText(LoginActivity.this, "Lỗi đăng nhập: " + errorMessage, Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 }
