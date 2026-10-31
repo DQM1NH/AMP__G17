@@ -24,6 +24,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -77,6 +79,7 @@ public class MapActivity extends AppCompatActivity
     private Button btnClose;
     private Button btnMapTab;
     private Button btnRank;
+    private Button btnLogout;
 
     // Rương được chọn
     private Marker selectedChest;
@@ -110,6 +113,15 @@ public class MapActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Kiểm tra xác thực (NFR-09)
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Intent intent = new Intent(MapActivity.this, StartActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_map);
 
         initViews();
@@ -130,6 +142,7 @@ public class MapActivity extends AppCompatActivity
 
         btnMapTab = findViewById(R.id.btnMapTab);
         btnRank = findViewById(R.id.btnRank);
+        btnLogout = findViewById(R.id.btnLogout);
 
         chestPanel.setVisibility(View.GONE);
     }
@@ -150,6 +163,16 @@ public class MapActivity extends AppCompatActivity
 
 
     private void setupButtons() {
+
+        // Đăng xuất khỏi hệ thống (FR-19 & Step 8)
+        btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Toast.makeText(MapActivity.this, "Đã đăng xuất thành công!", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(MapActivity.this, StartActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
 
         // Bắt đầu săn rương
         btnHunt.setOnClickListener(v -> {
