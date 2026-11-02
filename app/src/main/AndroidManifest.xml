@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
@@ -31,8 +32,7 @@
 
         <activity
             android:name=".MapActivity"
-            android:exported="false" />
-
+            android:exported="false"/>
         <activity
             android:name=".ScoreActivity"
             android:exported="false"/>
@@ -47,6 +47,18 @@
             android:exported="false"/>
         <activity
             android:name=".ChallengeActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".ViewTreasureActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".HuntingActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".TreasureApproachedActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".OpenChestActivity"
             android:exported="false"/>
 
     </application>

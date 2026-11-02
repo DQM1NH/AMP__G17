@@ -2,6 +2,7 @@ package com.example.amp_g17;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -62,13 +63,11 @@ public class ScoreActivity extends AppCompatActivity {
             }
         });
 
-        // Nút XEM BẢNG XẾP HẠNG
         btnLeaderboard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: Chuyển sang LeaderboardActivity
-                // Intent intent = new Intent(RewardActivity.this, LeaderboardActivity.class);
-                // startActivity(intent);
+                 Intent intent = new Intent(ScoreActivity.this, RankActivity.class);
+                 startActivity(intent);
             }
         });
     }
