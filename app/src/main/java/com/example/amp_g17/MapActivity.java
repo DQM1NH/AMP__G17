@@ -9,6 +9,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Looper;
 import android.provider.Settings;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -18,7 +19,11 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -41,12 +46,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private static final float OPEN_CHEST_RADIUS_METERS = 50.0f;
+    private static final LatLng HANOI_CENTER = new LatLng(21.028511, 105.854167); // Hồ Hoàn Kiếm, Hà Nội
 
     private TextView tvGreeting;
     private TextView tvScore;
     private Button  btnMapTab;
     private Button btnRank;
-    private Button btnLogout;
+    private android.widget.ImageView btnSettings;
+    private ListenerRegistration userListener;
 
     // Google Maps & Location
     private GoogleMap mMap;
@@ -91,6 +98,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         initViews();
         setupListeners();
+        loadUserDataFromFirebase();
         initLocationServices();
 
         // Khởi tạo Google Map Fragment
@@ -106,6 +114,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         tvScore = findViewById(R.id.tvScore);
         btnMapTab = findViewById(R.id.btnMapTab);
         btnRank = findViewById(R.id.btnRank);
+        btnSettings = findViewById(R.id.btnSettings);
     }
 
     private void setupListeners() {
@@ -114,6 +123,124 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             Intent intent = new Intent(MapActivity.this, RankActivity.class);
             startActivity(intent);
         });
+
+        tvGreeting.setOnClickListener(v -> showSettingsDialog());
+        btnSettings.setOnClickListener(v -> showSettingsDialog());
+    }
+
+    private void showSettingsDialog() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) return;
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_settings, null);
+
+        TextView tvSettingName = dialogView.findViewById(R.id.tvSettingName);
+        TextView tvSettingEmail = dialogView.findViewById(R.id.tvSettingEmail);
+        TextView tvSettingScore = dialogView.findViewById(R.id.tvSettingScore);
+        TextView tvSettingChests = dialogView.findViewById(R.id.tvSettingChests);
+        Button btnDialogLogout = dialogView.findViewById(R.id.btnDialogLogout);
+
+        tvSettingEmail.setText("Email: " + (currentUser.getEmail() != null ? currentUser.getEmail() : "N/A"));
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        // Tải chi tiết người dùng từ Firestore
+        FirebaseFirestore.getInstance().collection("users").document(currentUser.getUid()).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc != null && doc.exists()) {
+                        String name = doc.getString("displayName");
+                        Long scoreObj = doc.getLong("totalScore");
+                        Long chestObj = doc.getLong("completedTreasureCount");
+
+                        long score = scoreObj != null ? scoreObj : 0;
+                        long chests = chestObj != null ? chestObj : 0;
+
+                        tvSettingName.setText("Tên: " + (name != null ? name : "Người chơi"));
+                        tvSettingScore.setText(String.format(java.util.Locale.getDefault(), "Điểm hiện tại: %,d điểm", score));
+                        tvSettingChests.setText("Kho báu đã mở: " + chests);
+                    }
+                });
+
+        btnDialogLogout.setOnClickListener(v -> {
+            dialog.dismiss();
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(MapActivity.this, StartActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
+
+        dialog.show();
+    }
+
+    private void loadUserDataFromFirebase() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) return;
+
+        String uid = currentUser.getUid();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        tvScore.setText("Điểm: Đang tải...");
+
+        userListener = db.collection("users").document(uid).addSnapshotListener(this, (documentSnapshot, error) -> {
+            if (error != null) {
+                android.util.Log.e("MapActivity", "Lỗi lắng nghe dữ liệu user: ", error);
+                tvScore.setText("Điểm: Lỗi Rules");
+                Toast.makeText(MapActivity.this, "Lỗi Firebase Rules: " + error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (documentSnapshot != null && documentSnapshot.exists()) {
+                String displayName = documentSnapshot.getString("displayName");
+                Long totalScore = documentSnapshot.getLong("totalScore");
+
+                if (displayName != null && !displayName.trim().isEmpty()) {
+                    tvGreeting.setText("Xin chào, " + displayName);
+                } else if (currentUser.getEmail() != null) {
+                    tvGreeting.setText("Xin chào, " + currentUser.getEmail());
+                } else {
+                    tvGreeting.setText("Xin chào, người chơi");
+                }
+
+                if (totalScore != null) {
+                    tvScore.setText(String.format(java.util.Locale.getDefault(), "Điểm: %,d", totalScore));
+                } else {
+                    tvScore.setText("Điểm: 0");
+                }
+            } else if (documentSnapshot != null && !documentSnapshot.exists()) {
+                // Khởi tạo thông tin user mặc định nếu chưa tồn tại trong Firestore
+                java.util.Map<String, Object> initialUser = new java.util.HashMap<>();
+                initialUser.put("displayName", currentUser.getDisplayName() != null ? currentUser.getDisplayName() : "Người chơi");
+                initialUser.put("totalScore", 0);
+                initialUser.put("completedTreasureCount", 0);
+                initialUser.put("createdAt", Timestamp.now());
+                initialUser.put("lastActiveAt", Timestamp.now());
+                db.collection("users").document(uid).set(initialUser, com.google.firebase.firestore.SetOptions.merge());
+            }
+        });
+
+        java.util.Map<String, Object> activeData = new java.util.HashMap<>();
+        activeData.put("lastActiveAt", Timestamp.now());
+        db.collection("users").document(uid).set(activeData, com.google.firebase.firestore.SetOptions.merge());
+    }
+
+    private boolean isLocationInVietnam(Location location) {
+        if (location == null) return false;
+        double lat = location.getLatitude();
+        double lng = location.getLongitude();
+        return (lat >= 8.0 && lat <= 24.0 && lng >= 102.0 && lng <= 110.0);
+    }
+
+    private LatLng getValidLocationLatLng(Location location) {
+        if (location != null && isLocationInVietnam(location)) {
+            return new LatLng(location.getLatitude(), location.getLongitude());
+        }
+        if (location != null) {
+            location.setLatitude(HANOI_CENTER.latitude);
+            location.setLongitude(HANOI_CENTER.longitude);
+        }
+        return HANOI_CENTER;
     }
 
     private void initLocationServices() {
@@ -126,15 +253,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 for (Location location : locationResult.getLocations()) {
                     if (location != null) {
                         currentLocation = location;
-                        LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                        LatLng currentLatLng = getValidLocationLatLng(location);
 
-                        // Lần đầu lấy được vị trí -> Zoom camera & khởi tạo danh sách kho báu
+                        // Lần đầu lấy được vị trí -> Zoom camera & khởi tạo danh sách kho báu ngẫu nhiên
                         if (isFirstLocationUpdate) {
                             isFirstLocationUpdate = false;
                             if (mMap != null) {
-                                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 17f));
+                                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 16f));
                             }
-                            generateSampleTreasures(currentLatLng);
+                            generateRandomTreasuresAround(currentLatLng);
                         }
                     }
                 }
@@ -146,6 +273,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
         mMap.getUiSettings().setZoomControlsEnabled(true);
+
+        // Đặt camera mặc định về trung tâm Hà Nội (Hồ Hoàn Kiếm) & tạo các kho báu ngẫu nhiên xung quanh
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(HANOI_CENTER, 15.5f));
+        generateRandomTreasuresAround(HANOI_CENTER);
 
         checkLocationPermission();
 
@@ -204,11 +335,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
                 if (location != null) {
                     currentLocation = location;
-                    LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                    LatLng currentLatLng = getValidLocationLatLng(location);
                     if (isFirstLocationUpdate) {
                         isFirstLocationUpdate = false;
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 17f));
-                        generateSampleTreasures(currentLatLng);
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 16f));
+                        generateRandomTreasuresAround(currentLatLng);
                     }
                 }
                 // Luôn khởi chạy đăng ký theo dõi vị trí liên tục
@@ -239,30 +370,66 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .show();
     }
 
-    private void generateSampleTreasures(LatLng playerPos) {
+    private void generateRandomTreasuresAround(LatLng centerPos) {
+        if (mMap == null) return;
+
         mMap.clear();
         treasureList.clear();
+        java.util.Random random = new java.util.Random();
 
-        double lat = playerPos.latitude;
-        double lng = playerPos.longitude;
+        String[] rarities = {"Common", "Rare", "Epic", "Legendary"};
+        String[] difficulties = {"Dễ", "Trung bình", "Khó", "Cực khó"};
+        String[] rewardRanges = {"100~300 điểm", "200~600 điểm", "500~1000 điểm", "1000~2000 điểm"};
+        String[] descriptions = {
+                "Kho báu cổ cất giấu gần khu vực Hà Nội.",
+                "Rương quý hiếm nằm sâu trong lòng thành phố.",
+                "Kho báu ẩn rải rác xung quanh khu vực của bạn.",
+                "Chiếc rương kho báu ngập tràn điểm thưởng.",
+                "Thử thách đặc biệt dành cho thợ săn kho báu."
+        };
 
-        treasureList.add(new TreasureItem("Kho báu 01", "Rare", "Trung bình", "Kho báu cổ được cất giấu từ lâu, di chuyển lại gần để khám phá.", "200~800 điểm", new LatLng(lat + 0.0002, lng + 0.0002)));
-        treasureList.add(new TreasureItem("Kho báu 02", "Common", "Dễ", "Kho báu phổ thông nằm ở khu vực trống.", "100~400 điểm", new LatLng(lat - 0.0012, lng + 0.0015)));
-        treasureList.add(new TreasureItem("Kho báu 03", "Epic", "Khó", "Kho báu huyền thoại chứa nhiều điểm thưởng giá trị.", "500~1500 điểm", new LatLng(lat + 0.0018, lng - 0.0012)));
+        int numberOfTreasures = 12 + random.nextInt(3); // Tạo ngẫu nhiên từ 6 đến 8 rương
 
-        for (TreasureItem item : treasureList) {
-            float markerColor = BitmapDescriptorFactory.HUE_YELLOW;
-            if (item.rarity.equals("Common")) markerColor = BitmapDescriptorFactory.HUE_AZURE;
-            else if (item.rarity.equals("Epic")) markerColor = BitmapDescriptorFactory.HUE_MAGENTA;
+        for (int i = 1; i <= numberOfTreasures; i++) {
+            // Ngẫu nhiên tọa độ trong bán kính khoảng ~150m - 500m quanh vị trí trung tâm
+            double latOffset = (random.nextDouble() - 0.5) * 0.007;
+            double lngOffset = (random.nextDouble() - 0.5) * 0.007;
 
-            // 1. Tạo Marker trên bản đồ
+            LatLng treasurePos = new LatLng(centerPos.latitude + latOffset, centerPos.longitude + lngOffset);
+
+            int rarityIndex = random.nextInt(rarities.length);
+            String rarity = rarities[rarityIndex];
+            String difficulty = difficulties[rarityIndex];
+            String rewardRange = rewardRanges[rarityIndex];
+            String description = descriptions[random.nextInt(descriptions.length)];
+            String title = String.format(java.util.Locale.getDefault(), "Kho báu %02d", i);
+
+            TreasureItem item = new TreasureItem(title, rarity, difficulty, description, rewardRange, treasurePos);
+            treasureList.add(item);
+
+            float markerColor;
+            switch (rarity) {
+                case "Common":
+                    markerColor = BitmapDescriptorFactory.HUE_AZURE;
+                    break;
+                case "Rare":
+                    markerColor = BitmapDescriptorFactory.HUE_YELLOW;
+                    break;
+                case "Epic":
+                    markerColor = BitmapDescriptorFactory.HUE_MAGENTA;
+                    break;
+                case "Legendary":
+                default:
+                    markerColor = BitmapDescriptorFactory.HUE_RED;
+                    break;
+            }
+
             com.google.android.gms.maps.model.Marker marker = mMap.addMarker(new MarkerOptions()
-                    .position(item.position)
-                    .title(item.title + " - " + item.rarity)
+                    .position(treasurePos)
+                    .title(title + " (" + rarity + ")")
                     .snippet("Nhấn để xem thông tin chi tiết")
                     .icon(BitmapDescriptorFactory.defaultMarker(markerColor)));
 
-            // 2. Gắn đối tượng TreasureItem vào Tag của Marker
             if (marker != null) {
                 marker.setTag(item);
             }
@@ -312,6 +479,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         // Tạm dừng cập nhật vị trí khi activity ngưng hoạt động để tiết kiệm pin
         if (fusedLocationClient != null && locationCallback != null) {
             fusedLocationClient.removeLocationUpdates(locationCallback);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (userListener != null) {
+            userListener.remove();
         }
     }
 
