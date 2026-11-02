@@ -10,37 +10,42 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-
 import java.util.Locale;
 
 public class ChallengeActivity extends AppCompatActivity {
+
     private ImageView btnBack;
-    private TextView tvTreasureTitle;
-    private TextView tvTreasureRarity;
-    private TextView tvQuestionNumber;
-    private TextView tvQuestionText;
+    private TextView tvTreasureTitle, tvTreasureRarity, tvQuestionNumber, tvQuestionText;
     private RadioGroup rgAnswers;
-    private RadioButton rbOptionA;
-    private RadioButton rbOptionB;
-    private RadioButton rbOptionC;
-    private RadioButton rbOptionD;
+    private RadioButton rbOptionA, rbOptionB, rbOptionC, rbOptionD;
     private Button btnSubmit;
 
-    // Các biến xử lý CountDownTimer
+    // CountDownTimer 30s
     private CountDownTimer countDownTimer;
-    private static final long TIMER_DURATION_MS = 30000; // thoi gian moi cau hoi: 30 giay
+    private static final long TIMER_DURATION_MS = 30000;
     private boolean isSubmitted = false;
 
-    // Chỉ số đáp án đúng
-    private final int correctAnswerIndex = 1; // VD: o day 1 tuong trung co B la dap an dung
+    // Đáp án đúng mẫu (Index 1 = B. Hà Nội)
+    private final int correctAnswerIndex = 1;
+
+    private String treasureTitle = "Kho báu 01";
+    private String treasureRarity = "Rare";
+
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_challenge);
 
+        initViews();
+        displayChallengeData();
+        setupListeners();
+
+        // Khởi chạy đếm ngược 30 giây
+        startTimer();
+    }
+
+    private void initViews() {
         btnBack = findViewById(R.id.btnBack);
         tvTreasureTitle = findViewById(R.id.tvTreasureTitle);
         tvTreasureRarity = findViewById(R.id.tvTreasureRarity);
@@ -52,38 +57,30 @@ public class ChallengeActivity extends AppCompatActivity {
         rbOptionC = findViewById(R.id.rbOptionC);
         rbOptionD = findViewById(R.id.rbOptionD);
         btnSubmit = findViewById(R.id.btnSubmit);
+    }
 
-        // Nhận dữ liệu truyền từ Intent (nếu có)
+    private void displayChallengeData() {
         Intent intent = getIntent();
         if (intent != null) {
             String title = intent.getStringExtra("EXTRA_TREASURE_TITLE");
             String rarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
 
-            if (title != null && !title.isEmpty()) {
-                tvTreasureTitle.setText(title);
-            }
-            if (rarity != null && !rarity.isEmpty()) {
-                tvTreasureRarity.setText(rarity);
-            }
+            if (title != null && !title.isEmpty()) treasureTitle = title;
+            if (rarity != null && !rarity.isEmpty()) treasureRarity = rarity;
+
+            tvTreasureTitle.setText(treasureTitle);
+            tvTreasureRarity.setText(treasureRarity);
         }
+    }
 
-        // Nút Quay lại
-        btnBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+    private void setupListeners() {
+        btnBack.setOnClickListener(v -> finish());
 
-        // Nút Gửi câu trả lời
-        btnSubmit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnSubmit.setOnClickListener(v -> {
+            if (!isSubmitted) {
                 checkAnswerAndSubmit();
             }
         });
-        // Bat dau dem nguoc
-        startTimer();
     }
 
     private void startTimer() {
@@ -91,8 +88,7 @@ public class ChallengeActivity extends AppCompatActivity {
             @Override
             public void onTick(long millisUntilFinished) {
                 int secondsLeft = (int) (millisUntilFinished / 1000);
-                // Cập nhật giao diện đếm ngược (Ví dụ: hiển thị lên tvQuestionNumber)
-                tvQuestionNumber.setText(String.format(Locale.getDefault(), "CÂU HỎI 01 - THỜI GIAN: ", secondsLeft));
+                tvQuestionNumber.setText(String.format(Locale.getDefault(), "CÂU HỎI 01 - THỜI GIAN: %02ds", secondsLeft));
             }
 
             @Override
@@ -106,40 +102,37 @@ public class ChallengeActivity extends AppCompatActivity {
             }
         }.start();
     }
+
     private void checkAnswerAndSubmit() {
         int selectedId = rgAnswers.getCheckedRadioButtonId();
 
-        // Kiểm tra xem người chơi đã chọn đáp án chưa
         if (selectedId == -1) {
             Toast.makeText(this, "Vui lòng chọn một đáp án!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Xác định đáp án được chọn
-        int selectedIndex = -1;
-        if (selectedId == R.id.rbOptionA) {
-            selectedIndex = 0;
-        } else if (selectedId == R.id.rbOptionB) {
-            selectedIndex = 1;
-        } else if (selectedId == R.id.rbOptionC) {
-            selectedIndex = 2;
-        } else if (selectedId == R.id.rbOptionD) {
-            selectedIndex = 3;
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
         }
+        isSubmitted = true;
 
-        // Kiểm tra đáp án
+        int selectedIndex = -1;
+        if (selectedId == R.id.rbOptionA) selectedIndex = 0;
+        else if (selectedId == R.id.rbOptionB) selectedIndex = 1;
+        else if (selectedId == R.id.rbOptionC) selectedIndex = 2;
+        else if (selectedId == R.id.rbOptionD) selectedIndex = 3;
+
+        // XỬ LÝ TRẢ LỜI ĐÚNG -> CHUYỂN SANG OpenChestActivity
         if (selectedIndex == correctAnswerIndex) {
-            Toast.makeText(this, "Chính xác! Bạn nhận được kho báu.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Chính xác! Chuẩn bị lắc mở rương...", Toast.LENGTH_SHORT).show();
 
-            // Chuyển sang màn hình nhận thưởng
-            Intent intent = new Intent(ChallengeActivity.this, ScoreActivity.class);
-            intent.putExtra("EXTRA_TREASURE_NAME", tvTreasureTitle.getText().toString() + " - " + tvTreasureRarity.getText().toString());
-            intent.putExtra("EXTRA_REWARD_POINTS", 400);
-            intent.putExtra("EXTRA_TOTAL_POINTS", 1600);
+            Intent intent = new Intent(ChallengeActivity.this, OpenChestActivity.class);
+            intent.putExtra("EXTRA_TREASURE_TITLE", treasureTitle);
+            intent.putExtra("EXTRA_TREASURE_RARITY", treasureRarity);
             startActivity(intent);
-            finish(); // Đóng Activity thử thách
+            finish(); // Đóng ChallengeActivity
         } else {
-            Toast.makeText(this, "Đáp án chưa đúng. Hãy thử lại!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Đáp án chưa đúng. Bạn đã bỏ lỡ kho báu!", Toast.LENGTH_SHORT).show();
             disableAnswerOptions();
         }
     }
@@ -154,7 +147,6 @@ public class ChallengeActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Hủy timer để tránh rò rỉ bộ nhớ (memory leak) khi thoát Activity
         if (countDownTimer != null) {
             countDownTimer.cancel();
         }

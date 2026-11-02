@@ -144,16 +144,16 @@
             android:textStyle="bold" />
 
         <!-- Nút Xem bảng xếp hạng -->
-        <Button
-            android:id="@+id/btnLeaderboard"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="#FFFFFF"
-            android:textColor="#000000"
-            android:text="XEM BẢNG XẾP HẠNG"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            tools:ignore="UnusedAttribute" />
+    <Button
+        android:id="@+id/btnLeaderboard"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="#FFFFFF"
+        android:text="XEM BẢNG XẾP HẠNG"
+        android:textColor="#000000"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:ignore="UnusedAttribute" />
 </LinearLayout>
