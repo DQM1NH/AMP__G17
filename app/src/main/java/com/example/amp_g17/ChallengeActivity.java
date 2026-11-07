@@ -11,6 +11,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import java.util.ArrayList;
 import java.util.Locale;
 
 public class ChallengeActivity extends AppCompatActivity {
@@ -26,8 +27,11 @@ public class ChallengeActivity extends AppCompatActivity {
     private static final long TIMER_DURATION_MS = 30000;
     private boolean isSubmitted = false;
 
-    // Đáp án đúng mẫu (Index 1 = B. Hà Nội)
-    private final int correctAnswerIndex = 1;
+    // Lay dap an tu Firestore (0=A, 1=B, 2=C, 3=D)
+    private int correctAnswerIndex = -1;
+    private String challengeId;
+    private String treasureId;
+    private int rewardPoints = 0;
 
     private String treasureTitle = "Kho báu 01";
     private String treasureRarity = "Rare";
@@ -38,7 +42,9 @@ public class ChallengeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_challenge);
 
         initViews();
-        displayChallengeData();
+        if (!displayChallengeData()) {
+            return;
+        }
         setupListeners();
 
         // Khởi chạy đếm ngược 30 giây
@@ -59,18 +65,41 @@ public class ChallengeActivity extends AppCompatActivity {
         btnSubmit = findViewById(R.id.btnSubmit);
     }
 
-    private void displayChallengeData() {
+    private boolean displayChallengeData() {
         Intent intent = getIntent();
-        if (intent != null) {
-            String title = intent.getStringExtra("EXTRA_TREASURE_TITLE");
-            String rarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
-
-            if (title != null && !title.isEmpty()) treasureTitle = title;
-            if (rarity != null && !rarity.isEmpty()) treasureRarity = rarity;
-
-            tvTreasureTitle.setText(treasureTitle);
-            tvTreasureRarity.setText(treasureRarity);
+        if (intent == null) {
+            finish();
+            return false;
         }
+
+        String title = intent.getStringExtra("EXTRA_TREASURE_TITLE");
+        String rarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
+        if (title != null && !title.isEmpty()) treasureTitle = title;
+        if (rarity != null && !rarity.isEmpty()) treasureRarity = rarity;
+        tvTreasureTitle.setText(treasureTitle);
+        tvTreasureRarity.setText(treasureRarity);
+
+        // Lay thu thach tu Firestore
+        challengeId = intent.getStringExtra("EXTRA_CHALLENGE_ID");
+        String question = intent.getStringExtra("EXTRA_CHALLENGE_QUESTION");
+        ArrayList<String> options = intent.getStringArrayListExtra("EXTRA_CHALLENGE_OPTIONS");
+        correctAnswerIndex = intent.getIntExtra("EXTRA_CORRECT_OPTION_INDEX", -1);
+        treasureId = intent.getStringExtra("EXTRA_TREASURE_ID");
+        rewardPoints = intent.getIntExtra("EXTRA_REWARD_POINTS", 0);
+
+        if (question == null || options == null || options.size() < 4
+                || correctAnswerIndex < 0 || correctAnswerIndex >= options.size()) {
+            Toast.makeText(this, "Không tải được thử thách. Vui lòng thử lại!", Toast.LENGTH_LONG).show();
+            finish();
+            return false;
+        }
+
+        tvQuestionText.setText(question);
+        rbOptionA.setText("A. " + options.get(0));
+        rbOptionB.setText("B. " + options.get(1));
+        rbOptionC.setText("C. " + options.get(2));
+        rbOptionD.setText("D. " + options.get(3));
+        return true;
     }
 
     private void setupListeners() {
@@ -129,6 +158,9 @@ public class ChallengeActivity extends AppCompatActivity {
             Intent intent = new Intent(ChallengeActivity.this, OpenChestActivity.class);
             intent.putExtra("EXTRA_TREASURE_TITLE", treasureTitle);
             intent.putExtra("EXTRA_TREASURE_RARITY", treasureRarity);
+            intent.putExtra("EXTRA_TREASURE_ID", treasureId);
+            intent.putExtra("EXTRA_CHALLENGE_ID", challengeId);
+            intent.putExtra("EXTRA_REWARD_POINTS", rewardPoints);
             startActivity(intent);
             finish(); // Đóng ChallengeActivity
         } else {

@@ -53,6 +53,14 @@ public class ViewTreasureActivity extends AppCompatActivity implements OnMapRead
     private LatLng treasureLatLng = new LatLng(21.0285, 105.8542);
     private float currentDistanceInMeters = -1;
 
+    private String challengeId;
+    private String challengeQuestion;
+    private String challengeType;
+    private java.util.ArrayList<String> challengeOptions;
+    private int correctOptionIndex = -1;
+    private String treasureId;
+    private int rewardPoints = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,6 +100,15 @@ public class ViewTreasureActivity extends AppCompatActivity implements OnMapRead
             double lat = intent.getDoubleExtra("EXTRA_LAT", 21.0285);
             double lng = intent.getDoubleExtra("EXTRA_LNG", 105.8542);
             treasureLatLng = new LatLng(lat, lng);
+
+            // lay du leiu tu intent
+            challengeId = intent.getStringExtra("EXTRA_CHALLENGE_ID");
+            challengeQuestion = intent.getStringExtra("EXTRA_CHALLENGE_QUESTION");
+            challengeType = intent.getStringExtra("EXTRA_CHALLENGE_TYPE");
+            challengeOptions = intent.getStringArrayListExtra("EXTRA_CHALLENGE_OPTIONS");
+            correctOptionIndex = intent.getIntExtra("EXTRA_CORRECT_OPTION_INDEX", -1);
+            treasureId = intent.getStringExtra("EXTRA_TREASURE_ID");
+            rewardPoints = intent.getIntExtra("EXTRA_REWARD_POINTS", 0);
         }
 
         tvTreasureName.setText(treasureName);
@@ -106,6 +123,12 @@ public class ViewTreasureActivity extends AppCompatActivity implements OnMapRead
 
         // CHỈNH SỬA: Bấm nút "BẮT ĐẦU SĂN" chuyển sang HuntingActivity
         btnStartHunt.setOnClickListener(v -> {
+            if (challengeQuestion == null || challengeOptions == null
+                    || challengeOptions.size() < 4 || correctOptionIndex < 0) {
+                Toast.makeText(this, "Kho báu này chưa có thử thách hợp lệ. Hãy quay lại chọn kho báu khác!", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             Toast.makeText(this, "Bắt đầu chuyến săn: " + treasureName, Toast.LENGTH_SHORT).show();
 
             Intent intent = new Intent(ViewTreasureActivity.this, HuntingActivity.class);
@@ -113,6 +136,14 @@ public class ViewTreasureActivity extends AppCompatActivity implements OnMapRead
             intent.putExtra("EXTRA_TREASURE_RARITY", treasureRarity);
             intent.putExtra("EXTRA_LAT", treasureLatLng.latitude);
             intent.putExtra("EXTRA_LNG", treasureLatLng.longitude);
+
+            intent.putExtra("EXTRA_CHALLENGE_ID", challengeId);
+            intent.putExtra("EXTRA_CHALLENGE_QUESTION", challengeQuestion);
+            intent.putExtra("EXTRA_CHALLENGE_TYPE", challengeType);
+            intent.putStringArrayListExtra("EXTRA_CHALLENGE_OPTIONS", challengeOptions);
+            intent.putExtra("EXTRA_CORRECT_OPTION_INDEX", correctOptionIndex);
+            intent.putExtra("EXTRA_TREASURE_ID", treasureId);
+            intent.putExtra("EXTRA_REWARD_POINTS", rewardPoints);
             startActivity(intent);
             finish();
         });
