@@ -118,6 +118,7 @@ public class LoginActivity extends AppCompatActivity {
                                         java.util.Map<String, Object> activeData = new java.util.HashMap<>();
                                         activeData.put("lastActiveAt", Timestamp.now());
                                         db.collection("users").document(uid).set(activeData, com.google.firebase.firestore.SetOptions.merge());
+
                                         Toast.makeText(LoginActivity.this, "Đăng nhập thành công! Chào mừng " + displayName, Toast.LENGTH_SHORT).show();
                                         Intent intent = new Intent(LoginActivity.this, MapActivity.class);
                                         startActivity(intent);
