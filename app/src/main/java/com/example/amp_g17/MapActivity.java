@@ -532,7 +532,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         Random random = new Random(latIdx * 1_000_003L + lngIdx); // seed cố định theo ô lưới
 
         String[] rarities = {"Common", "Rare", "Epic", "Legendary"};
-        String[] difficulties = {"easy", "medium", "hard", "hard"};
+        String[] difficulties = {"easy", "medium", "hard", "very hard"};
         String[] rewardRanges = {"100~300 điểm", "200~600 điểm", "500~1000 điểm", "1000~2000 điểm"};
         int[][] rewardMinMax = {{100, 300}, {200, 600}, {500, 1000}, {1000, 2000}};
         String[] descriptions = {
