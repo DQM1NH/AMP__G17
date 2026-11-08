@@ -38,6 +38,9 @@ public class OpenChestActivity extends AppCompatActivity implements SensorEventL
 
     private String treasureTitle = "Kho báu 01";
     private String treasureRarity = "Rare";
+    private String treasureId;
+    private String challengeId;
+    private int rewardPoints = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +70,9 @@ public class OpenChestActivity extends AppCompatActivity implements SensorEventL
             if (intent.hasExtra("EXTRA_TREASURE_RARITY")) {
                 treasureRarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
             }
+            treasureId = intent.getStringExtra("EXTRA_TREASURE_ID");
+            challengeId = intent.getStringExtra("EXTRA_CHALLENGE_ID");
+            rewardPoints = intent.getIntExtra("EXTRA_REWARD_POINTS", 0);
         }
     }
 
@@ -145,8 +151,9 @@ public class OpenChestActivity extends AppCompatActivity implements SensorEventL
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             Intent intent = new Intent(OpenChestActivity.this, ScoreActivity.class);
             intent.putExtra("EXTRA_TREASURE_NAME", treasureTitle + " - " + treasureRarity);
-            intent.putExtra("EXTRA_REWARD_POINTS", 400);
-            intent.putExtra("EXTRA_TOTAL_POINTS", 1600);
+            intent.putExtra("EXTRA_REWARD_POINTS", rewardPoints > 0 ? rewardPoints : 400);
+            intent.putExtra("EXTRA_TREASURE_ID", treasureId);
+            intent.putExtra("EXTRA_CHALLENGE_ID", challengeId);
             startActivity(intent);
             finish(); // Đóng OpenChestActivity
         }, 1500);

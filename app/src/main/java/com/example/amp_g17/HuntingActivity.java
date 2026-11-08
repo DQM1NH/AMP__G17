@@ -63,6 +63,14 @@ public class HuntingActivity extends AppCompatActivity implements OnMapReadyCall
     private LatLng targetLatLng = new LatLng(21.0285, 105.8542);
     private float currentDistanceInMeters = -1;
 
+    private String challengeId;
+    private String challengeQuestion;
+    private String challengeType;
+    private java.util.ArrayList<String> challengeOptions;
+    private int correctOptionIndex = -1;
+    private String treasureId;
+    private int rewardPoints = 0;
+
     // Biến kiểm soát tự động chuyển màn hình 1 lần
     private boolean isAutoNavigated = false;
 
@@ -104,6 +112,15 @@ public class HuntingActivity extends AppCompatActivity implements OnMapReadyCall
             double lat = intent.getDoubleExtra("EXTRA_LAT", 21.0285);
             double lng = intent.getDoubleExtra("EXTRA_LNG", 105.8542);
             targetLatLng = new LatLng(lat, lng);
+
+            // Lay du lieu truyen qua intent
+            challengeId = intent.getStringExtra("EXTRA_CHALLENGE_ID");
+            challengeQuestion = intent.getStringExtra("EXTRA_CHALLENGE_QUESTION");
+            challengeType = intent.getStringExtra("EXTRA_CHALLENGE_TYPE");
+            challengeOptions = intent.getStringArrayListExtra("EXTRA_CHALLENGE_OPTIONS");
+            correctOptionIndex = intent.getIntExtra("EXTRA_CORRECT_OPTION_INDEX", -1);
+            treasureId = intent.getStringExtra("EXTRA_TREASURE_ID");
+            rewardPoints = intent.getIntExtra("EXTRA_REWARD_POINTS", 0);
         }
         tvTarget.setText("Mục tiêu: " + targetName);
     }
@@ -204,6 +221,14 @@ public class HuntingActivity extends AppCompatActivity implements OnMapReadyCall
                 intent.putExtra("EXTRA_TREASURE_RARITY", targetRarity);
                 intent.putExtra("EXTRA_LAT", targetLatLng.latitude);
                 intent.putExtra("EXTRA_LNG", targetLatLng.longitude);
+
+                intent.putExtra("EXTRA_CHALLENGE_ID", challengeId);
+                intent.putExtra("EXTRA_CHALLENGE_QUESTION", challengeQuestion);
+                intent.putExtra("EXTRA_CHALLENGE_TYPE", challengeType);
+                intent.putStringArrayListExtra("EXTRA_CHALLENGE_OPTIONS", challengeOptions);
+                intent.putExtra("EXTRA_CORRECT_OPTION_INDEX", correctOptionIndex);
+                intent.putExtra("EXTRA_TREASURE_ID", treasureId);
+                intent.putExtra("EXTRA_REWARD_POINTS", rewardPoints);
                 startActivity(intent);
                 finish(); // Đóng HuntingActivity
             }, 1000);

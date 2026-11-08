@@ -10,7 +10,9 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import java.util.ArrayList;
 import java.util.Locale;
 
 public class ChallengeActivity extends AppCompatActivity {
@@ -26,8 +28,11 @@ public class ChallengeActivity extends AppCompatActivity {
     private static final long TIMER_DURATION_MS = 30000;
     private boolean isSubmitted = false;
 
-    // Đáp án đúng mẫu (Index 1 = B. Hà Nội)
-    private final int correctAnswerIndex = 1;
+    // Đáp án đúng lấy từ Firestore (0=A, 1=B, 2=C, 3=D)
+    private int correctAnswerIndex = -1;
+    private String challengeId;
+    private String treasureId;
+    private int rewardPoints = 0;
 
     private String treasureTitle = "Kho báu 01";
     private String treasureRarity = "Rare";
@@ -38,7 +43,9 @@ public class ChallengeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_challenge);
 
         initViews();
-        displayChallengeData();
+        if (!displayChallengeData()) {
+            return; // Không có thử thách hợp lệ -> đã finish()
+        }
         setupListeners();
 
         // Khởi chạy đếm ngược 30 giây
@@ -59,18 +66,41 @@ public class ChallengeActivity extends AppCompatActivity {
         btnSubmit = findViewById(R.id.btnSubmit);
     }
 
-    private void displayChallengeData() {
+    private boolean displayChallengeData() {
         Intent intent = getIntent();
-        if (intent != null) {
-            String title = intent.getStringExtra("EXTRA_TREASURE_TITLE");
-            String rarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
-
-            if (title != null && !title.isEmpty()) treasureTitle = title;
-            if (rarity != null && !rarity.isEmpty()) treasureRarity = rarity;
-
-            tvTreasureTitle.setText(treasureTitle);
-            tvTreasureRarity.setText(treasureRarity);
+        if (intent == null) {
+            finish();
+            return false;
         }
+
+        String title = intent.getStringExtra("EXTRA_TREASURE_TITLE");
+        String rarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
+        if (title != null && !title.isEmpty()) treasureTitle = title;
+        if (rarity != null && !rarity.isEmpty()) treasureRarity = rarity;
+        tvTreasureTitle.setText(treasureTitle);
+        tvTreasureRarity.setText(treasureRarity);
+
+        // Thử thách lấy từ Firestore
+        challengeId = intent.getStringExtra("EXTRA_CHALLENGE_ID");
+        String question = intent.getStringExtra("EXTRA_CHALLENGE_QUESTION");
+        ArrayList<String> options = intent.getStringArrayListExtra("EXTRA_CHALLENGE_OPTIONS");
+        correctAnswerIndex = intent.getIntExtra("EXTRA_CORRECT_OPTION_INDEX", -1);
+        treasureId = intent.getStringExtra("EXTRA_TREASURE_ID");
+        rewardPoints = intent.getIntExtra("EXTRA_REWARD_POINTS", 0);
+
+        if (question == null || options == null || options.size() < 4
+                || correctAnswerIndex < 0 || correctAnswerIndex >= options.size()) {
+            Toast.makeText(this, "Không tải được thử thách. Vui lòng thử lại!", Toast.LENGTH_LONG).show();
+            finish();
+            return false;
+        }
+
+        tvQuestionText.setText(question);
+        rbOptionA.setText("A. " + options.get(0));
+        rbOptionB.setText("B. " + options.get(1));
+        rbOptionC.setText("C. " + options.get(2));
+        rbOptionD.setText("D. " + options.get(3));
+        return true;
     }
 
     private void setupListeners() {
@@ -97,7 +127,9 @@ public class ChallengeActivity extends AppCompatActivity {
                     isSubmitted = true;
                     tvQuestionNumber.setText("CÂU HỎI 01 - HẾT GIỜ!");
                     disableAnswerOptions();
-                    Toast.makeText(ChallengeActivity.this, "Đã hết 30 giây! Bạn đã thất bại ở thử thách này.", Toast.LENGTH_LONG).show();
+                    showFailureAndReturnToMap("Hết giờ!",
+                            "Bạn đã hết 30 giây để trả lời nên thử thách thất bại. "
+                                    + "Kho báu vẫn còn trên bản đồ, hãy thử lại nhé!");
                 }
             }
         }.start();
@@ -129,12 +161,36 @@ public class ChallengeActivity extends AppCompatActivity {
             Intent intent = new Intent(ChallengeActivity.this, OpenChestActivity.class);
             intent.putExtra("EXTRA_TREASURE_TITLE", treasureTitle);
             intent.putExtra("EXTRA_TREASURE_RARITY", treasureRarity);
+            intent.putExtra("EXTRA_TREASURE_ID", treasureId);
+            intent.putExtra("EXTRA_CHALLENGE_ID", challengeId);
+            intent.putExtra("EXTRA_REWARD_POINTS", rewardPoints);
             startActivity(intent);
             finish(); // Đóng ChallengeActivity
         } else {
-            Toast.makeText(this, "Đáp án chưa đúng. Bạn đã bỏ lỡ kho báu!", Toast.LENGTH_SHORT).show();
             disableAnswerOptions();
+            showFailureAndReturnToMap("Sai rồi!",
+                    "Đáp án của bạn chưa đúng nên bạn chưa mở được rương. "
+                            + "Kho báu vẫn còn trên bản đồ, hãy thử lại nhé!");
         }
+    }
+
+    private void showFailureAndReturnToMap(String title, String message) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton("Về bản đồ", (dialog, which) -> returnToMap())
+                .show();
+    }
+
+    private void returnToMap() {
+        Intent intent = new Intent(ChallengeActivity.this, MapActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
     }
 
     private void disableAnswerOptions() {
