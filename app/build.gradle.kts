@@ -49,6 +49,7 @@ dependencies {
     implementation ("com.google.firebase:firebase-auth" )
     implementation("com.google.android.gms:play-services-maps:20.1.0")
     implementation("com.google.android.gms:play-services-location:21.4.0")
+    implementation("nl.dionsegijn:konfetti-xml:2.0.4")
 }
 
 secrets {

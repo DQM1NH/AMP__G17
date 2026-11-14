@@ -5,8 +5,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
-    android:paddingStart="18dp"
-    android:paddingEnd="18dp">
+    android:background="#F5F5F5">
 
     <!-- Top Bar: Nút Quay lại và Tiêu đề -->
     <LinearLayout
@@ -14,393 +13,314 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="8dp">
+        android:padding="16dp"
+        android:background="@color/black">
 
         <ImageView
             android:id="@+id/btnBack"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:src="@android:drawable/ic_menu_revert"
-            app:tint="#000000"
+            app:tint="#FFFFFF"
             android:contentDescription="Quay lại" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Bảng xếp hạng"
-            android:textSize="30dp"
+            android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="#000000"
+            android:textColor="#FFFFFF"
             android:layout_marginStart="16dp" />
     </LinearLayout>
-
-    <!-- Subtitle phụ -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Sắp xếp theo tổng điểm giảm dần"
-        android:textSize="20dp"
-        android:textColor="#777777"
-        android:layout_marginBottom="20dp" />
 
     <!-- Khung Podium Top 3 (Bệ vinh danh) -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="220dp"
         android:orientation="horizontal"
-        android:gravity="bottom"
-        android:padding="16dp"
-        android:background="@android:drawable/editbox_background">
+        android:gravity="bottom|center_horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="16dp"
+        android:background="@color/black">
 
         <!-- Hạng #2 -->
-        <LinearLayout
+        <androidx.cardview.widget.CardView
             android:layout_width="0dp"
-            android:layout_height="130dp"
+            android:layout_height="140dp"
             android:layout_weight="1"
-            android:layout_marginEnd="6dp"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:background="@android:drawable/editbox_background">
+            android:layout_marginEnd="8dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="#E0E0E0"
+            app:cardElevation="4dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="#2"
-                android:textSize="22dp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="#757575" />
 
-            <TextView
-                android:id="@+id/tvTop2Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Text"
-                android:textSize="18dp"
-                android:textColor="#333333" />
+                <TextView
+                    android:id="@+id/tvTop2Name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Đang tải..."
+                    android:textSize="14sp"
+                    android:textColor="#333333"
+                    android:textAlignment="center"
+                    android:maxLines="2" />
 
-            <TextView
-                android:id="@+id/tvTop2Score"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="7.600"
-                android:textSize="18dp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/tvTop2Score"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="--"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
         <!-- Hạng #1 (Cao nhất) -->
-        <LinearLayout
+        <androidx.cardview.widget.CardView
             android:layout_width="0dp"
-            android:layout_height="150dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:background="@android:drawable/editbox_background">
+            android:layout_height="170dp"
+            android:layout_weight="1.2"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="#FFD700"
+            app:cardElevation="8dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="#1"
-                android:textSize="24dp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    android:textColor="#B8860B" />
 
-            <TextView
-                android:id="@+id/tvTop1Name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Text"
-                android:textSize="18dp"
-                android:textColor="#333333" />
+                <TextView
+                    android:id="@+id/tvTop1Name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Đang tải..."
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"
+                    android:textAlignment="center"
+                    android:maxLines="2" />
 
-            <TextView
-                android:id="@+id/tvTop1Score"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="8.200"
-                android:textSize="18dp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/tvTop1Score"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="--"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
         <!-- Hạng #3 -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="#CD7F32"
+            app:cardElevation="4dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="#8B4513" />
+
+                <TextView
+                    android:id="@+id/tvTop3Name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Đang tải..."
+                    android:textSize="14sp"
+                    android:textColor="#333333"
+                    android:textAlignment="center"
+                    android:maxLines="2" />
+
+                <TextView
+                    android:id="@+id/tvTop3Score"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="--"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp">
+
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="110dp"
-            android:layout_weight="1"
-            android:layout_marginStart="6dp"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:background="@android:drawable/editbox_background">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Dòng #4 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="#3"
-                android:textSize="22dp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
+                android:layout_marginBottom="8dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
+                    <TextView android:layout_width="40dp" android:layout_height="wrap_content" android:text="4" android:textSize="18sp" android:textStyle="bold" android:textColor="#000000" />
+                    <TextView android:id="@+id/tvTop4Name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Đang tải..." android:textSize="16sp" android:textColor="#333333" />
+                    <TextView android:id="@+id/tvTop4Score" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textSize="16sp" android:textStyle="bold" android:textColor="#FF9800" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
-            <TextView
-                android:id="@+id/tvTop3Name"
-                android:layout_width="wrap_content"
+            <!-- Dòng #5 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Text"
-                android:textSize="18dp"
-                android:textColor="#333333" />
+                android:layout_marginBottom="8dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
+                    <TextView android:layout_width="40dp" android:layout_height="wrap_content" android:text="5" android:textSize="18sp" android:textStyle="bold" android:textColor="#000000" />
+                    <TextView android:id="@+id/tvTop5Name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Đang tải..." android:textSize="16sp" android:textColor="#333333" />
+                    <TextView android:id="@+id/tvTop5Score" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textSize="16sp" android:textStyle="bold" android:textColor="#FF9800" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
-            <TextView
-                android:id="@+id/tvTop3Score"
-                android:layout_width="wrap_content"
+            <!-- Dòng #6 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="6.900"
-                android:textSize="18dp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
+                android:layout_marginBottom="8dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
+                    <TextView android:layout_width="40dp" android:layout_height="wrap_content" android:text="6" android:textSize="18sp" android:textStyle="bold" android:textColor="#000000" />
+                    <TextView android:id="@+id/tvTop6Name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Đang tải..." android:textSize="16sp" android:textColor="#333333" />
+                    <TextView android:id="@+id/tvTop6Score" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textSize="16sp" android:textStyle="bold" android:textColor="#FF9800" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Dòng #7 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
+                    <TextView android:layout_width="40dp" android:layout_height="wrap_content" android:text="7" android:textSize="18sp" android:textStyle="bold" android:textColor="#000000" />
+                    <TextView android:id="@+id/tvTop7Name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Đang tải..." android:textSize="16sp" android:textColor="#333333" />
+                    <TextView android:id="@+id/tvTop7Score" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textSize="16sp" android:textStyle="bold" android:textColor="#FF9800" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
         </LinearLayout>
-    </LinearLayout>
-
-    <!-- Tiêu đề Danh sách xếp hạng -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="12dp"
-        android:text="DANH SÁCH XẾP HẠNG"
-        android:textSize="24dp"
-        android:textStyle="bold"
-        android:textColor="#000000" />
-
-    <!-- Header Bảng: Hạng | Người chơi | Điểm -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="16dp"
-        android:background="@android:drawable/editbox_background">
-
-        <TextView
-            android:layout_width="60dp"
-            android:layout_height="wrap_content"
-            android:text="Hạng"
-            android:textSize="22dp"
-            android:textStyle="bold"
-            android:textColor="#000000" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Người chơi"
-            android:textSize="22dp"
-            android:textStyle="bold"
-            android:textColor="#000000" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Điểm"
-            android:textSize="22dp"
-            android:textStyle="bold"
-            android:textColor="#000000" />
-    </LinearLayout>
-
-    <!-- Dòng #4 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="6dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="16dp"
-        android:background="@android:drawable/editbox_background">
-
-        <TextView
-            android:layout_width="60dp"
-            android:layout_height="wrap_content"
-            android:text="4"
-            android:textSize="22dp"
-            android:textColor="#000000" />
-
-        <TextView
-            android:id="@+id/tvTop4Name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Text"
-            android:textColor="#000000"
-            android:textSize="22dp" />
-
-        <TextView
-            android:id="@+id/tvTop4Score"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="5.400"
-            android:textSize="22dp"
-            android:textStyle="bold"
-            android:textColor="#000000" />
-    </LinearLayout>
-
-    <!-- Dòng #5 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="6dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="16dp"
-        android:background="@android:drawable/editbox_background">
-
-        <TextView
-            android:layout_width="60dp"
-            android:layout_height="wrap_content"
-            android:text="5"
-            android:textSize="22dp"
-            android:textColor="#000000" />
-
-        <TextView
-            android:id="@+id/tvTop5Name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Text"
-            android:textSize="22dp"
-            android:textColor="#000000" />
-
-        <TextView
-            android:id="@+id/tvTop5Score"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="4.800"
-            android:textSize="22dp"
-            android:textStyle="bold"
-            android:textColor="#000000" />
-    </LinearLayout>
-
-    <!-- Dòng #6 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="6dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="16dp"
-        android:background="@android:drawable/editbox_background">
-
-        <TextView
-            android:layout_width="60dp"
-            android:layout_height="wrap_content"
-            android:text="6"
-            android:textSize="22dp"
-            android:textColor="#000000" />
-
-        <TextView
-            android:id="@+id/tvTop6Name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Text"
-            android:textSize="22dp"
-            android:textColor="#000000" />
-
-        <TextView
-            android:id="@+id/tvTop6Score"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="4.100"
-            android:textSize="22dp"
-            android:textStyle="bold"
-            android:textColor="#000000" />
-    </LinearLayout>
-
-    <!-- Dòng #7 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="6dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="16dp"
-        android:background="@android:drawable/editbox_background">
-
-        <TextView
-            android:layout_width="60dp"
-            android:layout_height="wrap_content"
-            android:text="7"
-            android:textSize="22dp"
-            android:textColor="#000000" />
-
-        <TextView
-            android:id="@+id/tvTop7Name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Text"
-            android:textSize="22dp"
-            android:textColor="#000000" />
-
-        <TextView
-            android:id="@+id/tvTop7Score"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="3.200"
-            android:textSize="22dp"
-            android:textStyle="bold"
-            android:textColor="#000000" />
-    </LinearLayout>
+    </ScrollView>
 
     <!-- Phần thông tin: HẠNG CỦA BẠN -->
-    <RelativeLayout
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:layout_marginBottom="16dp">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
+        app:cardElevation="16dp"
+        app:cardBackgroundColor="#FFFFFF">
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_alignParentStart="true">
+            android:padding="20dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="HẠNG CỦA BẠN"
-                android:textSize="20dp"
-                android:textStyle="bold"
-                android:textColor="#777777" />
+                android:orientation="vertical"
+                android:layout_alignParentStart="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="THÀNH TÍCH CỦA BẠN"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#777777" />
+
+                <TextView
+                    android:id="@+id/tvMyRank"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Hạng: --"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000" />
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/tvMyRank"
+                android:id="@+id/tvMyPoints"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="#4"
-                android:textSize="24dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="-- điểm"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="#000000" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvMyPoints"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:text="5.400 điểm"
-            android:textSize="18dp"
-            android:textStyle="bold"
-            android:textColor="#000000" />
-    </RelativeLayout>
+                android:textColor="#4CAF50" />
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
 </LinearLayout>

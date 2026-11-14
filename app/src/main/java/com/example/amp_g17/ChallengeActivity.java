@@ -26,11 +26,14 @@ public class ChallengeActivity extends AppCompatActivity {
     private static final long TIMER_DURATION_MS = 30000;
     private boolean isSubmitted = false;
 
-    // Đáp án đúng mẫu (Index 1 = B. Hà Nội)
-    private final int correctAnswerIndex = 1;
-
-    private String treasureTitle = "Kho báu 01";
+    // Data câu hỏi
+    private int correctAnswerIndex = 1;
+    
+    // Data rương
+    private String treasureId = "";
+    private String treasureName = "Kho báu 01";
     private String treasureRarity = "Rare";
+    private int treasureRewardPoints = 400;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,14 +65,101 @@ public class ChallengeActivity extends AppCompatActivity {
     private void displayChallengeData() {
         Intent intent = getIntent();
         if (intent != null) {
-            String title = intent.getStringExtra("EXTRA_TREASURE_TITLE");
-            String rarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
+            if (intent.hasExtra("EXTRA_TREASURE_ID")) treasureId = intent.getStringExtra("EXTRA_TREASURE_ID");
+            if (intent.hasExtra("EXTRA_TREASURE_NAME")) treasureName = intent.getStringExtra("EXTRA_TREASURE_NAME");
+            if (intent.hasExtra("EXTRA_TREASURE_RARITY")) treasureRarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
+            if (intent.hasExtra("EXTRA_REWARD_POINTS")) treasureRewardPoints = intent.getIntExtra("EXTRA_REWARD_POINTS", 400);
 
-            if (title != null && !title.isEmpty()) treasureTitle = title;
-            if (rarity != null && !rarity.isEmpty()) treasureRarity = rarity;
-
-            tvTreasureTitle.setText(treasureTitle);
+            tvTreasureTitle.setText(treasureName);
             tvTreasureRarity.setText(treasureRarity);
+            
+            generateRandomQuestionByRarity(treasureRarity);
+        }
+    }
+
+    private void generateRandomQuestionByRarity(String rarity) {
+        // Sinh câu hỏi mẫu dựa theo độ hiếm của rương
+        java.util.Random random = new java.util.Random();
+        int r = random.nextInt(3);
+        
+        switch (rarity) {
+            case "Common":
+            case "Uncommon":
+                // Câu hỏi dễ
+                if (r == 0) {
+                    tvQuestionText.setText("1 + 1 bằng mấy?");
+                    rbOptionA.setText("A. 1");
+                    rbOptionB.setText("B. 2");
+                    rbOptionC.setText("C. 3");
+                    rbOptionD.setText("D. 4");
+                    correctAnswerIndex = 1; // Đáp án B
+                } else if (r == 1) {
+                    tvQuestionText.setText("Mặt trời mọc ở hướng nào?");
+                    rbOptionA.setText("A. Hướng Đông");
+                    rbOptionB.setText("B. Hướng Tây");
+                    rbOptionC.setText("C. Hướng Nam");
+                    rbOptionD.setText("D. Hướng Bắc");
+                    correctAnswerIndex = 0; // Đáp án A
+                } else {
+                    tvQuestionText.setText("Thủ đô của Việt Nam là gì?");
+                    rbOptionA.setText("A. Đà Nẵng");
+                    rbOptionB.setText("B. Hà Nội");
+                    rbOptionC.setText("C. Hồ Chí Minh");
+                    rbOptionD.setText("D. Hải Phòng");
+                    correctAnswerIndex = 1; // Đáp án B
+                }
+                break;
+            case "Rare":
+            case "Epic":
+                // Câu hỏi trung bình - khó
+                if (r == 0) {
+                    tvQuestionText.setText("Trong bảng tuần hoàn, nguyên tố Oxi có ký hiệu là gì?");
+                    rbOptionA.setText("A. Ox");
+                    rbOptionB.setText("B. O");
+                    rbOptionC.setText("C. O2");
+                    rbOptionD.setText("D. Oxi");
+                    correctAnswerIndex = 1; // Đáp án B
+                } else if (r == 1) {
+                    tvQuestionText.setText("Bức họa 'Mona Lisa' là tác phẩm của ai?");
+                    rbOptionA.setText("A. Vincent van Gogh");
+                    rbOptionB.setText("B. Pablo Picasso");
+                    rbOptionC.setText("C. Leonardo da Vinci");
+                    rbOptionD.setText("D. Michelangelo");
+                    correctAnswerIndex = 2; // Đáp án C
+                } else {
+                    tvQuestionText.setText("Thuyết tương đối do ai đề xuất?");
+                    rbOptionA.setText("A. Isaac Newton");
+                    rbOptionB.setText("B. Nikola Tesla");
+                    rbOptionC.setText("C. Albert Einstein");
+                    rbOptionD.setText("D. Galileo Galilei");
+                    correctAnswerIndex = 2; // Đáp án C
+                }
+                break;
+            case "Legendary":
+                // Câu hỏi rất khó
+                if (r == 0) {
+                    tvQuestionText.setText("Ngôn ngữ lập trình nào được thiết kế bởi Bjarne Stroustrup?");
+                    rbOptionA.setText("A. Java");
+                    rbOptionB.setText("B. Python");
+                    rbOptionC.setText("C. C++");
+                    rbOptionD.setText("D. Ruby");
+                    correctAnswerIndex = 2; // Đáp án C
+                } else if (r == 1) {
+                    tvQuestionText.setText("Đỉnh núi cao nhất trong hệ mặt trời nằm ở hành tinh nào?");
+                    rbOptionA.setText("A. Trái Đất");
+                    rbOptionB.setText("B. Sao Hỏa");
+                    rbOptionC.setText("C. Sao Mộc");
+                    rbOptionD.setText("D. Sao Kim");
+                    correctAnswerIndex = 1; // Đáp án B
+                } else {
+                    tvQuestionText.setText("Ai là người đầu tiên đặt chân lên mặt trăng?");
+                    rbOptionA.setText("A. Yuri Gagarin");
+                    rbOptionB.setText("B. Buzz Aldrin");
+                    rbOptionC.setText("C. Neil Armstrong");
+                    rbOptionD.setText("D. Michael Collins");
+                    correctAnswerIndex = 2; // Đáp án C
+                }
+                break;
         }
     }
 
@@ -88,14 +178,14 @@ public class ChallengeActivity extends AppCompatActivity {
             @Override
             public void onTick(long millisUntilFinished) {
                 int secondsLeft = (int) (millisUntilFinished / 1000);
-                tvQuestionNumber.setText(String.format(Locale.getDefault(), "CÂU HỎI 01 - THỜI GIAN: %02ds", secondsLeft));
+                tvQuestionNumber.setText(String.format(Locale.getDefault(), "CÂU HỎI THỬ THÁCH - THỜI GIAN: %02ds", secondsLeft));
             }
 
             @Override
             public void onFinish() {
                 if (!isSubmitted) {
                     isSubmitted = true;
-                    tvQuestionNumber.setText("CÂU HỎI 01 - HẾT GIỜ!");
+                    tvQuestionNumber.setText("CÂU HỎI - HẾT GIỜ!");
                     disableAnswerOptions();
                     Toast.makeText(ChallengeActivity.this, "Đã hết 30 giây! Bạn đã thất bại ở thử thách này.", Toast.LENGTH_LONG).show();
                 }
@@ -127,8 +217,10 @@ public class ChallengeActivity extends AppCompatActivity {
             Toast.makeText(this, "Chính xác! Chuẩn bị lắc mở rương...", Toast.LENGTH_SHORT).show();
 
             Intent intent = new Intent(ChallengeActivity.this, OpenChestActivity.class);
-            intent.putExtra("EXTRA_TREASURE_TITLE", treasureTitle);
+            intent.putExtra("EXTRA_TREASURE_ID", treasureId);
+            intent.putExtra("EXTRA_TREASURE_NAME", treasureName);
             intent.putExtra("EXTRA_TREASURE_RARITY", treasureRarity);
+            intent.putExtra("EXTRA_REWARD_POINTS", treasureRewardPoints);
             startActivity(intent);
             finish(); // Đóng ChallengeActivity
         } else {

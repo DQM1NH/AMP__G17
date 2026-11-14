@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center_horizontal"
     android:background="@drawable/anime_style_clouds"
-    android:paddingStart="18dp"
-    android:paddingEnd="18dp">
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp">
 
     <!-- Khoảng trống phía trên -->
     <Space
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_weight="1.8" />
+        android:layout_height="0dp"
+        android:layout_weight="1.2" />
 
     <LinearLayout
         android:id="@+id/introGroup"
@@ -28,67 +29,74 @@
             android:layout_marginTop="17dp"
             android:text="TREASURE HUNT"
             android:textColor="#FFC107"
-            android:textSize="45dp"
-            android:textStyle="bold" />
+            android:textSize="42sp"
+            android:textStyle="bold"
+            android:shadowColor="#000000"
+            android:shadowDx="2"
+            android:shadowDy="4"
+            android:shadowRadius="4" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Game săn kho báu"
-            android:textColor="#000000"
-            android:textSize="24dp" />
+            android:text="Game săn kho báu thực tế"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:shadowColor="#000000"
+            android:shadowDx="1"
+            android:shadowDy="2"
+            android:shadowRadius="3"/>
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/logo"
         android:layout_width="match_parent"
-        android:layout_height="280dp"
+        android:layout_height="250dp"
         android:gravity="center"
         android:orientation="vertical" >
 
-        <FrameLayout
+        <ImageView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/img_tim_kho_bau"
-            android:padding="17dp"></FrameLayout>
-
+            android:src="@drawable/img_tim_kho_bau"
+            android:scaleType="fitCenter" />
     </LinearLayout>
 
-    <!-- Hai nút chức năng -->
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.8" />
+
+    <!-- Hai nút chức năng dùng MaterialButton để có bóng và góc bo tròn mượt -->
     <LinearLayout
         android:id="@+id/actionsGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
-            android:layout_height="42dp"
-            android:background="@drawable/btn_green"
-            android:minHeight="50dp"
-            android:minWidth="50dp"
-            android:padding="0dp"
+            android:layout_height="56dp"
             android:text="ĐĂNG NHẬP"
-            android:textAllCaps="false"
-            android:textColor="#292929"
-            android:textSize="20dp"
+            app:cornerRadius="28dp"
+            app:backgroundTint="#4CAF50"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRegister"
             android:layout_width="match_parent"
-            android:layout_height="42dp"
-            android:layout_marginTop="9dp"
-            android:background="@drawable/btn_orange"
-            android:minHeight="50dp"
-            android:minWidth="50dp"
-            android:padding="0dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
             android:text="ĐĂNG KÝ"
-            android:textAllCaps="false"
-            android:textColor="#292929"
-            android:textSize="20dp"
+            app:cornerRadius="28dp"
+            app:backgroundTint="#FF9800"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
     </LinearLayout>
@@ -97,16 +105,20 @@
     <Space
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="0.7" />
+        android:layout_weight="0.5" />
 
     <TextView
         android:id="@+id/txtTerms"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="30dp"
+        android:layout_marginBottom="24dp"
         android:gravity="center"
         android:text="Điều khoản sử dụng · Chính sách quyền riêng tư"
-        android:textColor="#000000"
-        android:textSize="16sp" />
+        android:textColor="#FFFFFF"
+        android:shadowColor="#000000"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
+        android:textSize="14sp" />
 
 </LinearLayout>

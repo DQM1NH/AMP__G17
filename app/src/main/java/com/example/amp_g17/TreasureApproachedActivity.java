@@ -50,9 +50,10 @@ public class TreasureApproachedActivity extends AppCompatActivity implements OnM
     private LocationCallback locationCallback;
     private LocationRequest locationRequest;
 
-    // Data Kho Báu
+    private String treasureId = "";
     private String targetName = "Kho báu 01";
     private String targetRarity = "Rare";
+    private int treasureRewardPoints = 400;
     private LatLng targetLatLng = new LatLng(21.0285, 105.8542);
     private float currentDistanceInMeters = -1;
 
@@ -86,11 +87,17 @@ public class TreasureApproachedActivity extends AppCompatActivity implements OnM
     private void getIntentData() {
         Intent intent = getIntent();
         if (intent != null) {
-            if (intent.hasExtra("EXTRA_TREASURE_TITLE")) {
-                targetName = intent.getStringExtra("EXTRA_TREASURE_TITLE");
+            if (intent.hasExtra("EXTRA_TREASURE_ID")) {
+                treasureId = intent.getStringExtra("EXTRA_TREASURE_ID");
+            }
+            if (intent.hasExtra("EXTRA_TREASURE_NAME")) {
+                targetName = intent.getStringExtra("EXTRA_TREASURE_NAME");
             }
             if (intent.hasExtra("EXTRA_TREASURE_RARITY")) {
                 targetRarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
+            }
+            if (intent.hasExtra("EXTRA_REWARD_POINTS")) {
+                treasureRewardPoints = intent.getIntExtra("EXTRA_REWARD_POINTS", 400);
             }
             double lat = intent.getDoubleExtra("EXTRA_LAT", 21.0285);
             double lng = intent.getDoubleExtra("EXTRA_LNG", 105.8542);
@@ -107,14 +114,26 @@ public class TreasureApproachedActivity extends AppCompatActivity implements OnM
         btnOpenChallenge.setOnClickListener(v -> {
             if (isInRange) {
                 Intent intent = new Intent(TreasureApproachedActivity.this, ChallengeActivity.class);
-                intent.putExtra("EXTRA_TREASURE_TITLE", targetName);
+                intent.putExtra("EXTRA_TREASURE_ID", treasureId);
+                intent.putExtra("EXTRA_TREASURE_NAME", targetName);
                 intent.putExtra("EXTRA_TREASURE_RARITY", targetRarity);
+                intent.putExtra("EXTRA_REWARD_POINTS", treasureRewardPoints);
                 startActivity(intent);
                 finish(); // Đóng Activity hiện tại
             } else {
                 Toast.makeText(this, "Bạn đã rời xa kho báu! Hãy tiến lại gần hơn (< 50m).", Toast.LENGTH_SHORT).show();
             }
         });
+        
+        // Cấp quyền Admin Test cho màn hình này
+        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null && "admin@gmail.com".equals(user.getEmail())) {
+            btnOpenChallenge.setEnabled(true);
+            btnOpenChallenge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#FF0000")));
+            btnOpenChallenge.setTextColor(Color.WHITE);
+            btnOpenChallenge.setText("[ADMIN] MỞ THỬ THÁCH");
+            isInRange = true; // Ép cờ true để Admin có thể click mở
+        }
     }
 
     private void setupLocationServices() {
@@ -164,14 +183,28 @@ public class TreasureApproachedActivity extends AppCompatActivity implements OnM
             btnOpenChallenge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50")));
             btnOpenChallenge.setTextColor(Color.WHITE);
         } else {
-            isInRange = false;
-            tvStatusTitle.setText("ĐÃ RỜI KHỎI PHẠM VI");
-            tvStatusTitle.setTextColor(Color.RED);
-            tvStatusSub.setText("Vui lòng tiến lại gần dưới 50m");
+            // Kiểm tra Admin
+            com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+            if (user != null && "admin@gmail.com".equals(user.getEmail())) {
+                isInRange = true;
+                tvStatusTitle.setText("[ADMIN MODE]");
+                tvStatusTitle.setTextColor(Color.parseColor("#FF0000"));
+                tvStatusSub.setText("Đã bỏ qua yêu cầu khoảng cách");
+                
+                btnOpenChallenge.setEnabled(true);
+                btnOpenChallenge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#FF0000")));
+                btnOpenChallenge.setTextColor(Color.WHITE);
+                btnOpenChallenge.setText("[ADMIN] MỞ THỬ THÁCH");
+            } else {
+                isInRange = false;
+                tvStatusTitle.setText("ĐÃ RỜI KHỎI PHẠM VI");
+                tvStatusTitle.setTextColor(Color.RED);
+                tvStatusSub.setText("Vui lòng tiến lại gần dưới 50m");
 
-            btnOpenChallenge.setEnabled(false);
-            btnOpenChallenge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#B0B0B0")));
-            btnOpenChallenge.setTextColor(Color.parseColor("#666666"));
+                btnOpenChallenge.setEnabled(false);
+                btnOpenChallenge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#B0B0B0")));
+                btnOpenChallenge.setTextColor(Color.parseColor("#666666"));
+            }
         }
     }
 

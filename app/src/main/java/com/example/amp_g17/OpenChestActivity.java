@@ -36,8 +36,10 @@ public class OpenChestActivity extends AppCompatActivity implements SensorEventL
     // Dịch vụ rung
     private Vibrator vibrator;
 
-    private String treasureTitle = "Kho báu 01";
+    private String treasureId = "";
+    private String treasureName = "Kho báu 01";
     private String treasureRarity = "Rare";
+    private int treasureRewardPoints = 400;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,12 +63,10 @@ public class OpenChestActivity extends AppCompatActivity implements SensorEventL
     private void getIntentData() {
         Intent intent = getIntent();
         if (intent != null) {
-            if (intent.hasExtra("EXTRA_TREASURE_TITLE")) {
-                treasureTitle = intent.getStringExtra("EXTRA_TREASURE_TITLE");
-            }
-            if (intent.hasExtra("EXTRA_TREASURE_RARITY")) {
-                treasureRarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
-            }
+            if (intent.hasExtra("EXTRA_TREASURE_ID")) treasureId = intent.getStringExtra("EXTRA_TREASURE_ID");
+            if (intent.hasExtra("EXTRA_TREASURE_NAME")) treasureName = intent.getStringExtra("EXTRA_TREASURE_NAME");
+            if (intent.hasExtra("EXTRA_TREASURE_RARITY")) treasureRarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
+            if (intent.hasExtra("EXTRA_REWARD_POINTS")) treasureRewardPoints = intent.getIntExtra("EXTRA_REWARD_POINTS", 400);
         }
     }
 
@@ -132,24 +132,29 @@ public class OpenChestActivity extends AppCompatActivity implements SensorEventL
     private void onShakeDetected() {
         isChestOpened = true; // Đánh dấu đã lắc thành công
 
-        // Cập nhật giao diện rương mở
-        tvShakeStatus.setText("Trạng thái: Đã mở rương thành công!");
-        imgChest.setBackgroundResource(R.drawable.img_kho_bau_mo);
-
-        // Phát hiệu ứng rung
+        // Rung mạnh & Animation lắc rương
         triggerVibration();
+        android.view.animation.Animation shakeAnim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.shake_hint);
+        imgChest.startAnimation(shakeAnim);
 
-        Toast.makeText(this, "Chúc mừng! Bạn đã mở thành công rương kho báu!", Toast.LENGTH_SHORT).show();
-
-        // Đợi 1.5s hiển thị hình rương mở rồi chuyển sang RewardActivity (ScoreActivity)
+        // Sau khi lắc xong (khoảng 300ms) thì đổi hình rương mở
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            Intent intent = new Intent(OpenChestActivity.this, ScoreActivity.class);
-            intent.putExtra("EXTRA_TREASURE_NAME", treasureTitle + " - " + treasureRarity);
-            intent.putExtra("EXTRA_REWARD_POINTS", 400);
-            intent.putExtra("EXTRA_TOTAL_POINTS", 1600);
-            startActivity(intent);
-            finish(); // Đóng OpenChestActivity
-        }, 1500);
+            tvShakeStatus.setText("Trạng thái: Đã mở rương thành công!");
+            imgChest.setBackgroundResource(R.drawable.img_kho_bau_mo);
+            Toast.makeText(this, "Chúc mừng! Bạn đã mở thành công rương kho báu!", Toast.LENGTH_SHORT).show();
+
+            // Đợi 1.5s hiển thị hình rương mở rồi chuyển sang RewardActivity (ScoreActivity)
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                Intent intent = new Intent(OpenChestActivity.this, ScoreActivity.class);
+                intent.putExtra("EXTRA_TREASURE_ID", treasureId);
+                intent.putExtra("EXTRA_TREASURE_NAME", treasureName);
+                intent.putExtra("EXTRA_TREASURE_RARITY", treasureRarity);
+                intent.putExtra("EXTRA_REWARD_POINTS", treasureRewardPoints);
+                startActivity(intent);
+                finish(); // Đóng OpenChestActivity
+            }, 1500);
+
+        }, 400);
     }
 
     private void triggerVibration() {

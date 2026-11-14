@@ -45,11 +45,13 @@ public class ViewTreasureActivity extends AppCompatActivity implements OnMapRead
     private LocationRequest locationRequest;
 
     // Data Kho Báu
+    private String treasureId = "";
     private String treasureName = "Kho báu 01";
     private String treasureRarity = "Rare";
     private String treasureDifficulty = "Trung bình";
     private String treasureDescription = "Di chuyển đến điểm đánh dấu để mở khóa thử thách của kho báu.";
-    private String treasureRewardRange = "200~800 điểm";
+    private String treasureRewardRange = "400 điểm";
+    private int treasureRewardPoints = 400;
     private LatLng treasureLatLng = new LatLng(21.0285, 105.8542);
     private float currentDistanceInMeters = -1;
 
@@ -84,11 +86,13 @@ public class ViewTreasureActivity extends AppCompatActivity implements OnMapRead
     private void getIntentData() {
         Intent intent = getIntent();
         if (intent != null) {
+            if (intent.hasExtra("EXTRA_TREASURE_ID")) treasureId = intent.getStringExtra("EXTRA_TREASURE_ID");
             if (intent.hasExtra("EXTRA_TREASURE_NAME")) treasureName = intent.getStringExtra("EXTRA_TREASURE_NAME");
             if (intent.hasExtra("EXTRA_RARITY")) treasureRarity = intent.getStringExtra("EXTRA_RARITY");
             if (intent.hasExtra("EXTRA_DIFFICULTY")) treasureDifficulty = intent.getStringExtra("EXTRA_DIFFICULTY");
             if (intent.hasExtra("EXTRA_DESCRIPTION")) treasureDescription = intent.getStringExtra("EXTRA_DESCRIPTION");
             if (intent.hasExtra("EXTRA_REWARD_RANGE")) treasureRewardRange = intent.getStringExtra("EXTRA_REWARD_RANGE");
+            if (intent.hasExtra("EXTRA_REWARD_POINTS")) treasureRewardPoints = intent.getIntExtra("EXTRA_REWARD_POINTS", 400);
             double lat = intent.getDoubleExtra("EXTRA_LAT", 21.0285);
             double lng = intent.getDoubleExtra("EXTRA_LNG", 105.8542);
             treasureLatLng = new LatLng(lat, lng);
@@ -109,8 +113,10 @@ public class ViewTreasureActivity extends AppCompatActivity implements OnMapRead
             Toast.makeText(this, "Bắt đầu chuyến săn: " + treasureName, Toast.LENGTH_SHORT).show();
 
             Intent intent = new Intent(ViewTreasureActivity.this, HuntingActivity.class);
-            intent.putExtra("EXTRA_TREASURE_TITLE", treasureName);
+            intent.putExtra("EXTRA_TREASURE_ID", treasureId);
+            intent.putExtra("EXTRA_TREASURE_NAME", treasureName);
             intent.putExtra("EXTRA_TREASURE_RARITY", treasureRarity);
+            intent.putExtra("EXTRA_REWARD_POINTS", treasureRewardPoints);
             intent.putExtra("EXTRA_LAT", treasureLatLng.latitude);
             intent.putExtra("EXTRA_LNG", treasureLatLng.longitude);
             startActivity(intent);

@@ -64,19 +64,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     // Class quản lý thông tin Rương kho báu
     private static class TreasureItem {
+        String id;
         String title;
         String rarity;
         String difficulty;
         String description;
         String rewardRange;
+        int rewardPoints;
         LatLng position;
 
-        TreasureItem(String title, String rarity, String difficulty, String description, String rewardRange, LatLng position) {
+        TreasureItem(String id, String title, String rarity, String difficulty, String description, String rewardRange, int rewardPoints, LatLng position) {
+            this.id = id;
             this.title = title;
             this.rarity = rarity;
             this.difficulty = difficulty;
             this.description = description;
             this.rewardRange = rewardRange;
+            this.rewardPoints = rewardPoints;
             this.position = position;
         }
     }
@@ -129,50 +133,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void showSettingsDialog() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) return;
-
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_settings, null);
-
-        TextView tvSettingName = dialogView.findViewById(R.id.tvSettingName);
-        TextView tvSettingEmail = dialogView.findViewById(R.id.tvSettingEmail);
-        TextView tvSettingScore = dialogView.findViewById(R.id.tvSettingScore);
-        TextView tvSettingChests = dialogView.findViewById(R.id.tvSettingChests);
-        Button btnDialogLogout = dialogView.findViewById(R.id.btnDialogLogout);
-
-        tvSettingEmail.setText("Email: " + (currentUser.getEmail() != null ? currentUser.getEmail() : "N/A"));
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .create();
-
-        // Tải chi tiết người dùng từ Firestore
-        FirebaseFirestore.getInstance().collection("users").document(currentUser.getUid()).get()
-                .addOnSuccessListener(doc -> {
-                    if (doc != null && doc.exists()) {
-                        String name = doc.getString("displayName");
-                        Long scoreObj = doc.getLong("totalScore");
-                        Long chestObj = doc.getLong("completedTreasureCount");
-
-                        long score = scoreObj != null ? scoreObj : 0;
-                        long chests = chestObj != null ? chestObj : 0;
-
-                        tvSettingName.setText("Tên: " + (name != null ? name : "Người chơi"));
-                        tvSettingScore.setText(String.format(java.util.Locale.getDefault(), "Điểm hiện tại: %,d điểm", score));
-                        tvSettingChests.setText("Kho báu đã mở: " + chests);
-                    }
-                });
-
-        btnDialogLogout.setOnClickListener(v -> {
-            dialog.dismiss();
-            FirebaseAuth.getInstance().signOut();
-            Intent intent = new Intent(MapActivity.this, StartActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        });
-
-        dialog.show();
+        Intent intent = new Intent(MapActivity.this, ProfileActivity.class);
+        startActivity(intent);
     }
 
     private void loadUserDataFromFirebase() {
@@ -287,11 +249,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Intent intent = new Intent(MapActivity.this, ViewTreasureActivity.class);
 
                 // Đóng gói và truyền các Intent Extras khớp với bên ViewTreasureActivity nhận
+                intent.putExtra("EXTRA_TREASURE_ID", selectedTreasure.id);
                 intent.putExtra("EXTRA_TREASURE_NAME", selectedTreasure.title);
                 intent.putExtra("EXTRA_RARITY", selectedTreasure.rarity);
                 intent.putExtra("EXTRA_DIFFICULTY", selectedTreasure.difficulty);
                 intent.putExtra("EXTRA_DESCRIPTION", selectedTreasure.description);
                 intent.putExtra("EXTRA_REWARD_RANGE", selectedTreasure.rewardRange);
+                intent.putExtra("EXTRA_REWARD_POINTS", selectedTreasure.rewardPoints);
                 intent.putExtra("EXTRA_LAT", selectedTreasure.position.latitude);
                 intent.putExtra("EXTRA_LNG", selectedTreasure.position.longitude);
 
@@ -377,18 +341,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         treasureList.clear();
         java.util.Random random = new java.util.Random();
 
-        String[] rarities = {"Common", "Rare", "Epic", "Legendary"};
-        String[] difficulties = {"Dễ", "Trung bình", "Khó", "Cực khó"};
-        String[] rewardRanges = {"100~300 điểm", "200~600 điểm", "500~1000 điểm", "1000~2000 điểm"};
+        String[] rarities = {"Common", "Uncommon", "Rare", "Epic", "Legendary"};
+        String[] difficulties = {"Dễ", "Dễ - Trung bình", "Trung bình", "Khó", "Rất khó"};
+        int[] baseRewards = {100, 200, 400, 700, 2000};
         String[] descriptions = {
-                "Kho báu cổ cất giấu gần khu vực Hà Nội.",
-                "Rương quý hiếm nằm sâu trong lòng thành phố.",
-                "Kho báu ẩn rải rác xung quanh khu vực của bạn.",
-                "Chiếc rương kho báu ngập tràn điểm thưởng.",
-                "Thử thách đặc biệt dành cho thợ săn kho báu."
+                "Kho báu cổ cất giấu từ lâu, hãy nhanh tay khám phá.",
+                "Rương quý hiếm nằm sâu trong khu vực bí mật.",
+                "Kho báu ẩn rải rác đang chờ người đến mở khóa.",
+                "Chiếc rương kho báu ngập tràn điểm thưởng giá trị.",
+                "Thử thách đặc biệt dành cho thợ săn kho báu thực thụ."
         };
 
-        int numberOfTreasures = 12 + random.nextInt(3); // Tạo ngẫu nhiên từ 6 đến 8 rương
+        int numberOfTreasures = 12 + random.nextInt(3); // Tạo ngẫu nhiên từ 12 đến 14 rương
 
         for (int i = 1; i <= numberOfTreasures; i++) {
             // Ngẫu nhiên tọa độ trong bán kính khoảng ~150m - 500m quanh vị trí trung tâm
@@ -400,17 +364,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             int rarityIndex = random.nextInt(rarities.length);
             String rarity = rarities[rarityIndex];
             String difficulty = difficulties[rarityIndex];
-            String rewardRange = rewardRanges[rarityIndex];
+            
+            // Xây dựng ID kho báu ngẫu nhiên cố định cho phiên này để làm ID check trùng thưởng
+            String treasureId = "TREASURE_" + System.currentTimeMillis() + "_" + i;
+            
+            // Random dao động điểm thưởng từ điểm cơ bản
+            int reward = baseRewards[rarityIndex];
+            String rewardRange = reward + " điểm";
             String description = descriptions[random.nextInt(descriptions.length)];
             String title = String.format(java.util.Locale.getDefault(), "Kho báu %02d", i);
 
-            TreasureItem item = new TreasureItem(title, rarity, difficulty, description, rewardRange, treasurePos);
+            TreasureItem item = new TreasureItem(treasureId, title, rarity, difficulty, description, rewardRange, reward, treasurePos);
             treasureList.add(item);
 
             float markerColor;
             switch (rarity) {
                 case "Common":
                     markerColor = BitmapDescriptorFactory.HUE_AZURE;
+                    break;
+                case "Uncommon":
+                    markerColor = BitmapDescriptorFactory.HUE_GREEN;
                     break;
                 case "Rare":
                     markerColor = BitmapDescriptorFactory.HUE_YELLOW;
