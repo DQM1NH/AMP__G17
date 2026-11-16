@@ -56,7 +56,7 @@ public class ProfileActivity extends AppCompatActivity {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         userListener = db.collection("users").document(currentUser.getUid()).addSnapshotListener((doc, error) -> {
             if (error != null || doc == null || !doc.exists()) return;
-            
+
             String name = doc.getString("displayName");
             Long scoreObj = doc.getLong("totalScore");
             Long chestObj = doc.getLong("completedTreasureCount");
