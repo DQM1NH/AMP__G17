@@ -6,7 +6,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:paddingStart="18dp"
     android:paddingEnd="18dp"
-    android:backgroundTint="@color/cardview_light_background">
+    android:background="@color/cardview_light_background">
 
     <nl.dionsegijn.konfetti.xml.KonfettiView
         android:id="@+id/konfettiView"

@@ -153,7 +153,6 @@ public class OpenChestActivity extends AppCompatActivity implements SensorEventL
                 startActivity(intent);
                 finish(); // Đóng OpenChestActivity
             }, 1500);
-
         }, 400);
     }
 

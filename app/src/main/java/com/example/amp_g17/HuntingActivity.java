@@ -15,8 +15,6 @@ import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.VibratorManager;
-import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -41,8 +39,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 public class HuntingActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -53,7 +49,6 @@ public class HuntingActivity extends AppCompatActivity implements OnMapReadyCall
     private ImageView btnBack;
     private TextView tvTarget, tvDistance, tvChallengeTitle, tvChallengeSub;
     private LinearLayout btnChallengeStatus;
-    private Button btnAdminSkip;
 
     // Google Maps & Location
     private GoogleMap mMap;
@@ -62,12 +57,19 @@ public class HuntingActivity extends AppCompatActivity implements OnMapReadyCall
     private LocationRequest locationRequest;
     private Polyline polyline;
 
-    private String treasureId = "";
+    // Data Kho Báu
     private String targetName = "Kho báu 01";
     private String targetRarity = "Rare";
-    private int treasureRewardPoints = 400;
     private LatLng targetLatLng = new LatLng(21.0285, 105.8542);
     private float currentDistanceInMeters = -1;
+
+    private String challengeId;
+    private String challengeQuestion;
+    private String challengeType;
+    private java.util.ArrayList<String> challengeOptions;
+    private int correctOptionIndex = -1;
+    private String treasureId;
+    private int rewardPoints = 0;
 
     // Biến kiểm soát tự động chuyển màn hình 1 lần
     private boolean isAutoNavigated = false;
@@ -100,25 +102,25 @@ public class HuntingActivity extends AppCompatActivity implements OnMapReadyCall
         btnChallengeStatus = findViewById(R.id.btnChallengeStatus);
         tvChallengeTitle = findViewById(R.id.tvChallengeTitle);
         tvChallengeSub = findViewById(R.id.tvChallengeSub);
-        btnAdminSkip = findViewById(R.id.btnAdminSkip);
-        
-        // Kiểm tra quyền Admin (Ví dụ: Email admin là admin@gmail.com)
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null && "admin@gmail.com".equals(user.getEmail())) {
-            btnAdminSkip.setVisibility(View.VISIBLE);
-        }
     }
 
     private void getIntentData() {
         Intent intent = getIntent();
         if (intent != null) {
-            if (intent.hasExtra("EXTRA_TREASURE_ID")) treasureId = intent.getStringExtra("EXTRA_TREASURE_ID");
-            if (intent.hasExtra("EXTRA_TREASURE_NAME")) targetName = intent.getStringExtra("EXTRA_TREASURE_NAME");
+            if (intent.hasExtra("EXTRA_TREASURE_TITLE")) targetName = intent.getStringExtra("EXTRA_TREASURE_TITLE");
             if (intent.hasExtra("EXTRA_TREASURE_RARITY")) targetRarity = intent.getStringExtra("EXTRA_TREASURE_RARITY");
-            if (intent.hasExtra("EXTRA_REWARD_POINTS")) treasureRewardPoints = intent.getIntExtra("EXTRA_REWARD_POINTS", 400);
             double lat = intent.getDoubleExtra("EXTRA_LAT", 21.0285);
             double lng = intent.getDoubleExtra("EXTRA_LNG", 105.8542);
             targetLatLng = new LatLng(lat, lng);
+
+            // Lay du lieu truyen qua intent
+            challengeId = intent.getStringExtra("EXTRA_CHALLENGE_ID");
+            challengeQuestion = intent.getStringExtra("EXTRA_CHALLENGE_QUESTION");
+            challengeType = intent.getStringExtra("EXTRA_CHALLENGE_TYPE");
+            challengeOptions = intent.getStringArrayListExtra("EXTRA_CHALLENGE_OPTIONS");
+            correctOptionIndex = intent.getIntExtra("EXTRA_CORRECT_OPTION_INDEX", -1);
+            treasureId = intent.getStringExtra("EXTRA_TREASURE_ID");
+            rewardPoints = intent.getIntExtra("EXTRA_REWARD_POINTS", 0);
         }
         tvTarget.setText("Mục tiêu: " + targetName);
     }
@@ -130,11 +132,6 @@ public class HuntingActivity extends AppCompatActivity implements OnMapReadyCall
             if (currentDistanceInMeters > APPROACH_RADIUS_METERS) {
                 Toast.makeText(this, "Bạn cần di chuyển lại gần kho báu hơn (< 50m)!", Toast.LENGTH_SHORT).show();
             }
-        });
-
-        btnAdminSkip.setOnClickListener(v -> {
-            // Admin test: Tự động bỏ qua khoảng cách và chuyển sang mở kho báu
-            triggerTreasureApproached();
         });
     }
 
@@ -204,37 +201,38 @@ public class HuntingActivity extends AppCompatActivity implements OnMapReadyCall
         }
 
         // KIỂM TRA ĐIỀU KIỆN <= 50M -> PHÁT ÂM THANH & TỰ ĐỘNG CHUYỂN SANG TreasureApproachedActivity
-        if (currentDistanceInMeters <= APPROACH_RADIUS_METERS) {
-            triggerTreasureApproached();
+        if (currentDistanceInMeters <= APPROACH_RADIUS_METERS && !isAutoNavigated) {
+            isAutoNavigated = true; // Đánh dấu đã chuyển để tránh lặp lại
+
+            // 1. Cập nhật giao diện
+            tvChallengeTitle.setText("[ ĐÃ ĐẾN NƠI ] CHUYỂN MÀN HÌNH...");
+            tvChallengeTitle.setTextColor(Color.parseColor("#008000"));
+            tvChallengeSub.setText("Đang mở giao diện tiếp cận kho báu");
+
+            // 2. Phát âm thanh & rung thông báo
+            triggerAlert();
+
+            Toast.makeText(this, "Đã vào phạm vi 50m! Đang tiếp cận kho báu...", Toast.LENGTH_SHORT).show();
+
+            // 3. Đợi 1 giây để âm thanh phát hoàn tất rồi tự động chuyển Activity
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                Intent intent = new Intent(HuntingActivity.this, TreasureApproachedActivity.class);
+                intent.putExtra("EXTRA_TREASURE_TITLE", targetName);
+                intent.putExtra("EXTRA_TREASURE_RARITY", targetRarity);
+                intent.putExtra("EXTRA_LAT", targetLatLng.latitude);
+                intent.putExtra("EXTRA_LNG", targetLatLng.longitude);
+
+                intent.putExtra("EXTRA_CHALLENGE_ID", challengeId);
+                intent.putExtra("EXTRA_CHALLENGE_QUESTION", challengeQuestion);
+                intent.putExtra("EXTRA_CHALLENGE_TYPE", challengeType);
+                intent.putStringArrayListExtra("EXTRA_CHALLENGE_OPTIONS", challengeOptions);
+                intent.putExtra("EXTRA_CORRECT_OPTION_INDEX", correctOptionIndex);
+                intent.putExtra("EXTRA_TREASURE_ID", treasureId);
+                intent.putExtra("EXTRA_REWARD_POINTS", rewardPoints);
+                startActivity(intent);
+                finish(); // Đóng HuntingActivity
+            }, 1000);
         }
-    }
-
-    private void triggerTreasureApproached() {
-        if (isAutoNavigated) return;
-        isAutoNavigated = true; // Đánh dấu đã chuyển để tránh lặp lại
-
-        // 1. Cập nhật giao diện
-        tvChallengeTitle.setText("[ ĐÃ ĐẾN NƠI ] CHUYỂN MÀN HÌNH...");
-        tvChallengeTitle.setTextColor(Color.parseColor("#008000"));
-        tvChallengeSub.setText("Đang mở giao diện tiếp cận kho báu");
-
-        // 2. Phát âm thanh & rung thông báo
-        triggerAlert();
-
-        Toast.makeText(this, "Đã vào phạm vi kho báu! Đang chuyển tiếp...", Toast.LENGTH_SHORT).show();
-
-        // 3. Đợi 1 giây để âm thanh phát hoàn tất rồi tự động chuyển Activity
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            Intent intent = new Intent(HuntingActivity.this, TreasureApproachedActivity.class);
-            intent.putExtra("EXTRA_TREASURE_ID", treasureId);
-            intent.putExtra("EXTRA_TREASURE_NAME", targetName);
-            intent.putExtra("EXTRA_TREASURE_RARITY", targetRarity);
-            intent.putExtra("EXTRA_REWARD_POINTS", treasureRewardPoints);
-            intent.putExtra("EXTRA_LAT", targetLatLng.latitude);
-            intent.putExtra("EXTRA_LNG", targetLatLng.longitude);
-            startActivity(intent);
-            finish(); // Đóng HuntingActivity
-        }, 1000);
     }
 
     private void triggerAlert() {

@@ -11,7 +11,6 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -22,6 +21,7 @@ import androidx.core.content.ContextCompat;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
@@ -37,10 +37,17 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -50,7 +57,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private TextView tvGreeting;
     private TextView tvScore;
-    private Button  btnMapTab;
+    private Button btnMapTab;
     private Button btnRank;
     private android.widget.ImageView btnSettings;
     private ListenerRegistration userListener;
@@ -64,7 +71,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     // Class quản lý thông tin Rương kho báu
     private static class TreasureItem {
-        String id;
+        String id;          // ID cố định, dùng để nhớ kho báu đã mở
         String title;
         String rarity;
         String difficulty;
@@ -73,7 +80,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         int rewardPoints;
         LatLng position;
 
-        TreasureItem(String id, String title, String rarity, String difficulty, String description, String rewardRange, int rewardPoints, LatLng position) {
+        TreasureItem(String id, String title, String rarity, String difficulty, String description,
+                     String rewardRange, int rewardPoints, LatLng position) {
             this.id = id;
             this.title = title;
             this.rarity = rarity;
@@ -87,10 +95,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private final List<TreasureItem> treasureList = new ArrayList<>();
 
+    // Kho báu được sinh cố định theo ô lưới 0.005 độ (~550m) để mỗi lần mở app vẫn ra cùng một bộ kho báu
+    private static final double GRID_STEP = 0.005;
+    private String currentCellKey = null;
+    private final Map<String, Marker> markerMap = new HashMap<>();          // treasureId -> marker
+    private final Set<String> completedTreasureIds = new HashSet<>();        // kho báu đã mở của user
+    private ListenerRegistration completionListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Kiểm tra xác thực (NFR-09)
+        // Kiểm tra xác thực
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             Intent intent = new Intent(MapActivity.this, StartActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -103,6 +118,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         initViews();
         setupListeners();
         loadUserDataFromFirebase();
+        listenCompletedTreasures();
         initLocationServices();
 
         // Khởi tạo Google Map Fragment
@@ -122,7 +138,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void setupListeners() {
-        // Navigation chuyển sang màn hình Bảng xếp hạng
         btnRank.setOnClickListener(v -> {
             Intent intent = new Intent(MapActivity.this, RankActivity.class);
             startActivity(intent);
@@ -171,7 +186,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     tvScore.setText("Điểm: 0");
                 }
             } else if (documentSnapshot != null && !documentSnapshot.exists()) {
-                // Khởi tạo thông tin user mặc định nếu chưa tồn tại trong Firestore
                 java.util.Map<String, Object> initialUser = new java.util.HashMap<>();
                 initialUser.put("displayName", currentUser.getDisplayName() != null ? currentUser.getDisplayName() : "Người chơi");
                 initialUser.put("totalScore", 0);
@@ -208,7 +222,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void initLocationServices() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        // Khởi tạo Callback lắng nghe cập nhật vị trí định kỳ
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
@@ -217,7 +230,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         currentLocation = location;
                         LatLng currentLatLng = getValidLocationLatLng(location);
 
-                        // Lần đầu lấy được vị trí -> Zoom camera & khởi tạo danh sách kho báu ngẫu nhiên
                         if (isFirstLocationUpdate) {
                             isFirstLocationUpdate = false;
                             if (mMap != null) {
@@ -236,33 +248,128 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMap = googleMap;
         mMap.getUiSettings().setZoomControlsEnabled(true);
 
-        // Đặt camera mặc định về trung tâm Hà Nội (Hồ Hoàn Kiếm) & tạo các kho báu ngẫu nhiên xung quanh
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(HANOI_CENTER, 15.5f));
         generateRandomTreasuresAround(HANOI_CENTER);
 
         checkLocationPermission();
 
-        // Xử lý sự kiện khi nhấn vào điểm (Marker) trên bản đồ
         mMap.setOnMarkerClickListener(marker -> {
             TreasureItem selectedTreasure = (TreasureItem) marker.getTag();
             if (selectedTreasure != null) {
-                Intent intent = new Intent(MapActivity.this, ViewTreasureActivity.class);
-
-                // Đóng gói và truyền các Intent Extras khớp với bên ViewTreasureActivity nhận
-                intent.putExtra("EXTRA_TREASURE_ID", selectedTreasure.id);
-                intent.putExtra("EXTRA_TREASURE_NAME", selectedTreasure.title);
-                intent.putExtra("EXTRA_RARITY", selectedTreasure.rarity);
-                intent.putExtra("EXTRA_DIFFICULTY", selectedTreasure.difficulty);
-                intent.putExtra("EXTRA_DESCRIPTION", selectedTreasure.description);
-                intent.putExtra("EXTRA_REWARD_RANGE", selectedTreasure.rewardRange);
-                intent.putExtra("EXTRA_REWARD_POINTS", selectedTreasure.rewardPoints);
-                intent.putExtra("EXTRA_LAT", selectedTreasure.position.latitude);
-                intent.putExtra("EXTRA_LNG", selectedTreasure.position.longitude);
-
-                startActivity(intent);
+                if (completedTreasureIds.contains(selectedTreasure.id)) {
+                    Toast.makeText(this, "Kho báu này đã được mở rồi!", Toast.LENGTH_SHORT).show();
+                    removeCompletedMarkers();
+                } else {
+                    fetchRandomChallengeAndNavigate(selectedTreasure);
+                }
             }
-            return true; // Trả về true để không hiển thị InfoWindow mặc định của Google Maps
+            return true;
         });
+    }
+
+    // lay thu thach ngau nhien tu firestore theo do kho
+    private void fetchRandomChallengeAndNavigate(TreasureItem selectedTreasure) {
+        Toast.makeText(this, "Đang tải thử thách...", Toast.LENGTH_SHORT).show();
+
+        // Ep kieu de khop voi Firestore
+        String searchDifficulty = selectedTreasure.difficulty.toLowerCase().trim();
+
+        android.util.Log.d("MapActivity", "Đang tìm thử thách với difficulty = '" + searchDifficulty + "'");
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Đã bỏ temporary filter isActive để tránh lỗi Index, chỉ lọc theo difficulty
+        db.collection("challenges")
+                .whereEqualTo("difficulty", searchDifficulty)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    android.util.Log.d("MapActivity", "Số câu hỏi tìm thấy: " + queryDocumentSnapshots.size());
+
+                    // Xu ly khi khong co thu thach phu hop voi do kho
+                    if (queryDocumentSnapshots.isEmpty()) {
+                        Toast.makeText(MapActivity.this,
+                                "Chưa có câu hỏi cho độ khó: " + searchDifficulty + ". Kiểm tra collection 'challenges' trên Firestore.",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    Intent intent = new Intent(MapActivity.this, ViewTreasureActivity.class);
+
+                    // Truyen thong tin Kho bau
+                    intent.putExtra("EXTRA_TREASURE_NAME", selectedTreasure.title);
+                    intent.putExtra("EXTRA_RARITY", selectedTreasure.rarity);
+                    intent.putExtra("EXTRA_DIFFICULTY", selectedTreasure.difficulty);
+                    intent.putExtra("EXTRA_DESCRIPTION", selectedTreasure.description);
+                    intent.putExtra("EXTRA_REWARD_RANGE", selectedTreasure.rewardRange);
+                    intent.putExtra("EXTRA_LAT", selectedTreasure.position.latitude);
+                    intent.putExtra("EXTRA_LNG", selectedTreasure.position.longitude);
+                    intent.putExtra("EXTRA_TREASURE_ID", selectedTreasure.id);
+                    intent.putExtra("EXTRA_REWARD_POINTS", selectedTreasure.rewardPoints);
+
+                    List<DocumentSnapshot> validDocs = new ArrayList<>();
+                    for (DocumentSnapshot d : queryDocumentSnapshots.getDocuments()) {
+                        String reason = getInvalidChallengeReason(d);
+                        if (reason == null) {
+                            validDocs.add(d);
+                        } else {
+                            android.util.Log.w("MapActivity", "Bỏ qua challenge '" + d.getId() + "': " + reason);
+                        }
+                    }
+
+                    if (validDocs.isEmpty()) {
+                        Toast.makeText(MapActivity.this,
+                                "Các câu hỏi độ khó '" + searchDifficulty + "' đều sai định dạng. Xem Logcat (tag MapActivity).",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    DocumentSnapshot challengeDoc = validDocs.get(new Random().nextInt(validDocs.size()));
+                    android.util.Log.d("MapActivity", "Đã chọn challenge ID: " + challengeDoc.getId());
+
+                    intent.putExtra("EXTRA_CHALLENGE_ID", challengeDoc.getId());
+                    intent.putExtra("EXTRA_CHALLENGE_QUESTION", challengeDoc.getString("question"));
+                    intent.putExtra("EXTRA_CHALLENGE_TYPE", challengeDoc.getString("questionType"));
+                    intent.putStringArrayListExtra("EXTRA_CHALLENGE_OPTIONS", getChallengeOptions(challengeDoc));
+                    intent.putExtra("EXTRA_CORRECT_OPTION_INDEX", getCorrectIndex(challengeDoc));
+
+                    startActivity(intent);
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("MapActivity", "Lỗi Firestore: ", e);
+                    Toast.makeText(MapActivity.this, "Lỗi tải thử thách: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
+
+    // Kiem tra / doc du lieu challenge tu Firestore
+    private ArrayList<String> getChallengeOptions(DocumentSnapshot doc) {
+        ArrayList<String> result = new ArrayList<>();
+        Object raw = doc.get("options");
+        if (raw instanceof List) {
+            for (Object o : (List<?>) raw) {
+                if (o != null) result.add(String.valueOf(o));
+            }
+        }
+        return result;
+    }
+
+    private int getCorrectIndex(DocumentSnapshot doc) {
+        Object raw = doc.get("correctOptionIndex");
+        if (raw instanceof Number) return ((Number) raw).intValue();
+        if (raw instanceof String) {
+            try { return Integer.parseInt(((String) raw).trim()); } catch (NumberFormatException ignored) { }
+        }
+        return -1;
+    }
+
+    // Tra ve ly do neu khong hop le
+    private String getInvalidChallengeReason(DocumentSnapshot doc) {
+        String q = doc.getString("question");
+        if (q == null || q.trim().isEmpty()) return "thiếu field 'question' (hoặc không phải string)";
+        ArrayList<String> opts = getChallengeOptions(doc);
+        if (opts.size() < 4) return "'options' chỉ có " + opts.size() + " phần tử (cần 4) hoặc không phải array";
+        int idx = getCorrectIndex(doc);
+        if (idx < 0 || idx >= opts.size()) return "'correctOptionIndex' thiếu/sai (giá trị: " + doc.get("correctOptionIndex") + ")";
+        return null;
     }
 
     private void checkLocationPermission() {
@@ -284,7 +391,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void checkLocationSettingsAndFetch() {
-        // 1. Kiểm tra GPS trên thiết bị
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         boolean isGpsEnabled = locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean isNetworkEnabled = locationManager != null && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
@@ -294,7 +400,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         }
 
-        // 2. Lấy vị trí từ Cache trước, nếu rỗng sẽ yêu cầu cập nhật vị trí mới
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
                 if (location != null) {
@@ -306,7 +411,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         generateRandomTreasuresAround(currentLatLng);
                     }
                 }
-                // Luôn khởi chạy đăng ký theo dõi vị trí liên tục
                 startLocationUpdates();
             });
         }
@@ -334,56 +438,98 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .show();
     }
 
+    private void listenCompletedTreasures() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        completionListener = FirebaseFirestore.getInstance().collection("completions")
+                .whereEqualTo("userId", user.getUid())
+                .addSnapshotListener(this, (snapshot, error) -> {
+                    if (error != null) {
+                        android.util.Log.e("MapActivity", "Lỗi đọc completions: ", error);
+                        return;
+                    }
+                    if (snapshot == null) return;
+
+                    completedTreasureIds.clear();
+                    for (DocumentSnapshot d : snapshot.getDocuments()) {
+                        String tid = d.getString("treasureId");
+                        if (tid != null) completedTreasureIds.add(tid);
+                    }
+                    removeCompletedMarkers();
+                });
+    }
+
+    // Xoa marker, du lieu cac kho bau da mo.
+    private void removeCompletedMarkers() {
+        for (String id : completedTreasureIds) {
+            Marker m = markerMap.remove(id);
+            if (m != null) m.remove();
+        }
+        treasureList.removeIf(t -> completedTreasureIds.contains(t.id));
+    }
+
     private void generateRandomTreasuresAround(LatLng centerPos) {
         if (mMap == null) return;
 
+        // Snap tâm vào ô lưới -> cùng khu vực luôn ra cùng một bộ kho báu (ID + vị trí cố định)
+        long latIdx = Math.round(centerPos.latitude / GRID_STEP);
+        long lngIdx = Math.round(centerPos.longitude / GRID_STEP);
+        String cellKey = latIdx + "_" + lngIdx;
+
+        // Cùng ô lưới và đã vẽ rồi thì không vẽ lại
+        if (cellKey.equals(currentCellKey) && !markerMap.isEmpty()) return;
+        currentCellKey = cellKey;
+
+        double centerLat = latIdx * GRID_STEP;
+        double centerLng = lngIdx * GRID_STEP;
+
         mMap.clear();
         treasureList.clear();
-        java.util.Random random = new java.util.Random();
+        markerMap.clear();
 
-        String[] rarities = {"Common", "Uncommon", "Rare", "Epic", "Legendary"};
-        String[] difficulties = {"Dễ", "Dễ - Trung bình", "Trung bình", "Khó", "Rất khó"};
-        int[] baseRewards = {100, 200, 400, 700, 2000};
+        Random random = new Random(latIdx * 1_000_003L + lngIdx); // seed cố định theo ô lưới
+
+        String[] rarities = {"Common", "Rare", "Epic", "Legendary"};
+        String[] difficulties = {"easy", "medium", "hard", "very hard"};
+        String[] rewardRanges = {"100~300 điểm", "200~600 điểm", "500~1000 điểm", "1000~2000 điểm"};
+        int[][] rewardMinMax = {{100, 300}, {200, 600}, {500, 1000}, {1000, 2000}};
         String[] descriptions = {
-                "Kho báu cổ cất giấu từ lâu, hãy nhanh tay khám phá.",
-                "Rương quý hiếm nằm sâu trong khu vực bí mật.",
-                "Kho báu ẩn rải rác đang chờ người đến mở khóa.",
-                "Chiếc rương kho báu ngập tràn điểm thưởng giá trị.",
-                "Thử thách đặc biệt dành cho thợ săn kho báu thực thụ."
+                "Kho báu cổ cất giấu gần khu vực Hà Nội.",
+                "Rương quý hiếm nằm sâu trong lòng thành phố.",
+                "Kho báu ẩn rải rác xung quanh khu vực của bạn.",
+                "Chiếc rương kho báu ngập tràn điểm thưởng.",
+                "Thử thách đặc biệt dành cho thợ săn kho báu."
         };
 
-        int numberOfTreasures = 12 + random.nextInt(3); // Tạo ngẫu nhiên từ 12 đến 14 rương
+        int numberOfTreasures = 12 + random.nextInt(3);
 
         for (int i = 1; i <= numberOfTreasures; i++) {
-            // Ngẫu nhiên tọa độ trong bán kính khoảng ~150m - 500m quanh vị trí trung tâm
-            double latOffset = (random.nextDouble() - 0.5) * 0.007;
-            double lngOffset = (random.nextDouble() - 0.5) * 0.007;
-
-            LatLng treasurePos = new LatLng(centerPos.latitude + latOffset, centerPos.longitude + lngOffset);
-
+            // Luôn rút đủ số giá trị ngẫu nhiên cho mỗi kho báu (kể cả kho báu bị ẩn) để các kho báu còn lại không bị xê dịch
+            double latOffset = (random.nextDouble() - 0.5) * 0.008;
+            double lngOffset = (random.nextDouble() - 0.5) * 0.008;
             int rarityIndex = random.nextInt(rarities.length);
-            String rarity = rarities[rarityIndex];
-            String difficulty = difficulties[rarityIndex];
-            
-            // Xây dựng ID kho báu ngẫu nhiên cố định cho phiên này để làm ID check trùng thưởng
-            String treasureId = "TREASURE_" + System.currentTimeMillis() + "_" + i;
-            
-            // Random dao động điểm thưởng từ điểm cơ bản
-            int reward = baseRewards[rarityIndex];
-            String rewardRange = reward + " điểm";
             String description = descriptions[random.nextInt(descriptions.length)];
-            String title = String.format(java.util.Locale.getDefault(), "Kho báu %02d", i);
+            int minReward = rewardMinMax[rarityIndex][0];
+            int maxReward = rewardMinMax[rarityIndex][1];
+            int rewardPoints = minReward + random.nextInt((maxReward - minReward) / 50 + 1) * 50;
 
-            TreasureItem item = new TreasureItem(treasureId, title, rarity, difficulty, description, rewardRange, reward, treasurePos);
+            String treasureId = "treasure_" + cellKey + "_" + String.format(Locale.US, "%02d", i);
+
+            if (completedTreasureIds.contains(treasureId)) continue;
+
+            LatLng treasurePos = new LatLng(centerLat + latOffset, centerLng + lngOffset);
+            String rarity = rarities[rarityIndex];
+            String title = String.format(Locale.getDefault(), "Kho báu %02d", i);
+
+            TreasureItem item = new TreasureItem(treasureId, title, rarity, difficulties[rarityIndex],
+                    description, rewardRanges[rarityIndex], rewardPoints, treasurePos);
             treasureList.add(item);
 
             float markerColor;
             switch (rarity) {
                 case "Common":
                     markerColor = BitmapDescriptorFactory.HUE_AZURE;
-                    break;
-                case "Uncommon":
-                    markerColor = BitmapDescriptorFactory.HUE_GREEN;
                     break;
                 case "Rare":
                     markerColor = BitmapDescriptorFactory.HUE_YELLOW;
@@ -397,7 +543,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     break;
             }
 
-            com.google.android.gms.maps.model.Marker marker = mMap.addMarker(new MarkerOptions()
+            Marker marker = mMap.addMarker(new MarkerOptions()
                     .position(treasurePos)
                     .title(title + " (" + rarity + ")")
                     .snippet("Nhấn để xem thông tin chi tiết")
@@ -405,6 +551,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             if (marker != null) {
                 marker.setTag(item);
+                markerMap.put(treasureId, marker);
             }
         }
     }
@@ -415,7 +562,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         }
 
-        // Tính khoảng cách giữa vị trí người chơi và vị trí kho báu
         float[] results = new float[1];
         Location.distanceBetween(
                 currentLocation.getLatitude(), currentLocation.getLongitude(),
@@ -428,7 +574,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if (distanceInMeters <= OPEN_CHEST_RADIUS_METERS) {
             Toast.makeText(this, "Bạn đã đủ gần (" + (int) distanceInMeters + "m). Mở rương!", Toast.LENGTH_SHORT).show();
 
-            // Chuyển sang màn hình Mở rương kho báu
             Intent intent = new Intent(MapActivity.this, OpenChestActivity.class);
             intent.putExtra("EXTRA_TREASURE_TITLE", treasure.title);
             intent.putExtra("EXTRA_TREASURE_RARITY", treasure.rarity);
@@ -449,7 +594,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     protected void onPause() {
         super.onPause();
-        // Tạm dừng cập nhật vị trí khi activity ngưng hoạt động để tiết kiệm pin
         if (fusedLocationClient != null && locationCallback != null) {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }
@@ -460,6 +604,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         super.onDestroy();
         if (userListener != null) {
             userListener.remove();
+        }
+        if (completionListener != null) {
+            completionListener.remove();
         }
     }
 
