@@ -148,49 +148,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void showSettingsDialog() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) return;
-
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_settings, null);
-
-        TextView tvSettingName = dialogView.findViewById(R.id.tvSettingName);
-        TextView tvSettingEmail = dialogView.findViewById(R.id.tvSettingEmail);
-        TextView tvSettingScore = dialogView.findViewById(R.id.tvSettingScore);
-        TextView tvSettingChests = dialogView.findViewById(R.id.tvSettingChests);
-        Button btnDialogLogout = dialogView.findViewById(R.id.btnDialogLogout);
-
-        tvSettingEmail.setText("Email: " + (currentUser.getEmail() != null ? currentUser.getEmail() : "N/A"));
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .create();
-
-        FirebaseFirestore.getInstance().collection("users").document(currentUser.getUid()).get()
-                .addOnSuccessListener(doc -> {
-                    if (doc != null && doc.exists()) {
-                        String name = doc.getString("displayName");
-                        Long scoreObj = doc.getLong("totalScore");
-                        Long chestObj = doc.getLong("completedTreasureCount");
-
-                        long score = scoreObj != null ? scoreObj : 0;
-                        long chests = chestObj != null ? chestObj : 0;
-
-                        tvSettingName.setText("Tên: " + (name != null ? name : "Người chơi"));
-                        tvSettingScore.setText(String.format(java.util.Locale.getDefault(), "Điểm hiện tại: %,d điểm", score));
-                        tvSettingChests.setText("Kho báu đã mở: " + chests);
-                    }
-                });
-
-        btnDialogLogout.setOnClickListener(v -> {
-            dialog.dismiss();
-            FirebaseAuth.getInstance().signOut();
-            Intent intent = new Intent(MapActivity.this, StartActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        });
-
-        dialog.show();
+        Intent intent = new Intent(MapActivity.this, ProfileActivity.class);
+        startActivity(intent);
     }
 
     private void loadUserDataFromFirebase() {
